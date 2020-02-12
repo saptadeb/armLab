@@ -81,8 +81,31 @@ class TrajectoryPlanner():
 
         @return     The plan as num_steps x num_joints np.array
         """
+        T0 = 0
+        V0 = 0
+        Vf = 0
+        numSteps = T / self.dt
+        numJoints = len(initial_wp)
+        result = np.zeros((numSteps, numJoints))
+        M = getM(T0, T)
+        M_inv = np.linalg.inv(M)
+        parameters = []
+        for i in range(numJoints):
+            constraint = np.array([[initial_wp[i]],[V0],[final_wp[i]],[Vf]])
+            parameter = np.dot(M_inv, constraint) 
+            parameters.append(parameter)
 
-        pass
+        t = T0
+        for i in range(numSteps):
+            for j in range(numJoints):
+                timeVector = np.array([[0],[t],[t**2],[t***3]])
+                result[i][j] = np.dot(timeVector, parameters[j])
+                t = t + dt
+                
+        return result
+
+    def getM(T0, T):
+        return np.matrix('1 T0 T0**2 T0**3, 0 1 2*T0 3*T0**2, 1 T T**2 T**3, 0 1 2*T 3*T**2')
 
     def execute_plan(self, plan, look_ahead=8):
         """!
