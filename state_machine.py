@@ -113,6 +113,12 @@ class StateMachine():
             full_wp = [0.0] * self.rexarm.num_joints
             full_wp[0:len(wp)] = wp
             # TODO: Set the positions and break if estop is needed
+            self.rexarm.set_positions(wp)
+            time.sleep(1)
+            if (self.next_state == "estop"):
+                self.set_next_state("estop")
+                break
+
 
     def execute_tp(self):
         """!

@@ -185,6 +185,8 @@ class Gui(QMainWindow):
         self.ui.btn_init_arm.clicked.connect(self.initRexarm)
         self.ui.btnUser1.setText("Calibrate")
         self.ui.btnUser1.clicked.connect(partial(nxt_if_arm_init, 'calibrate'))
+        ##OUR_CODE
+        self.ui.btn_exec.clicked.connect(self.execute)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -263,6 +265,9 @@ class Gui(QMainWindow):
 
     def estop(self):
         self.sm.set_next_state("estop")
+
+    def execute(self):
+        self.sm.set_next_state("execute")
 
     def sliderChange(self):
         """!
