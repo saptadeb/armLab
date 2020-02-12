@@ -47,12 +47,18 @@ class TrajectoryPlanner():
 
         @param      max_speed  The maximum speed
         """
+        self.set_initial_wp()
+        self.set_final_wp([-0.7832884252188035,-0.09436285675897427,-0.02531686437435887,-0.007677401401759543])
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 0.25)
+        plan = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        self.execute_plan(plan)
         pass
 
     def stop(self):
         """!
         @brief      TODO Stop the trajectory planner
         """
+        self.idle = True
         pass
 
     def calc_time_from_waypoints(self, initial_wp, final_wp, max_speed):
@@ -65,9 +71,10 @@ class TrajectoryPlanner():
 
         @return     The amount of time to get to the final waypoint.
         """
-        joint_dist_to_cover = np.asarray(final_wp) - np.asarray(initial_wp)
+        joint_dist_to_cover = np.absolute(np.asarray(final_wp) - np.asarray(initial_wp))
         max_joint_dist_to_cover = np.max(joint_dist_to_cover)
         T = max_joint_dist_to_cover / max_speed
+        print(joint_dist_to_cover)
         return T
         pass
 
@@ -84,10 +91,11 @@ class TrajectoryPlanner():
         T0 = 0
         V0 = 0
         Vf = 0
-        numSteps = T / self.dt
+        numSteps = int(T / self.dt)
         numJoints = len(initial_wp)
-        result = np.zeros((numSteps, numJoints))
-        M = getM(T0, T)
+        result = np.zeros([numSteps, numJoints])
+        M = self.getM(T0, T)
+        print(T)
         M_inv = np.linalg.inv(M)
         parameters = []
         for i in range(numJoints):
@@ -98,14 +106,16 @@ class TrajectoryPlanner():
         t = T0
         for i in range(numSteps):
             for j in range(numJoints):
-                timeVector = np.array([[0],[t],[t**2],[t***3]])
-                result[i][j] = np.dot(timeVector, parameters[j])
+                timeVector = np.array([[0],[t],[t**2],[t**3]])
+                result[i,j] = np.dot(timeVector, parameters[j])
                 t = t + dt
                 
         return result
 
-    def getM(T0, T):
-        return np.matrix('1 T0 T0**2 T0**3, 0 1 2*T0 3*T0**2, 1 T T**2 T**3, 0 1 2*T 3*T**2')
+    def getM(self, T0, T):
+        M = np.array([[1,T0,T0**2,T0**3],[0,1,2*T0,3*T0**2],[1,T,T**2,T**3],[0,1,2*T,3*T**2]])
+        return M
+        # return np.matrix('1 T0 T0**2 T0**3; 0 1 2*T0 3*T0**2; 1 T T**2 T**3; 0 1 2*T 3*T**2')
 
     def execute_plan(self, plan, look_ahead=8):
         """!
@@ -114,4 +124,8 @@ class TrajectoryPlanner():
         @param      plan        The plan
         @param      look_ahead  The look ahead
         """
+        self.idle = False
+        for q in plan:
+            q_list = q.tolist()
+            self.set_positions(q_list)
         pass

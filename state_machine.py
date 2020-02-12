@@ -164,6 +164,9 @@ class StateMachine():
             full_wp[0:len(wp)] = wp
             waypoints.append(full_wp)
             # TODO: Send the waypoints to the trajectory planner and break if estop
+        self.tp.go()
+        # for wp_num in range(waypoints.shape[0] - 1):
+
 
     def calibrate(self):
         """!

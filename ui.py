@@ -792,7 +792,7 @@ class Ui_MainWindow(object):
         self.btnUser1.setText(_translate("MainWindow", "USER 1", None))
         self.btnUser2.setText(_translate("MainWindow", "Record Waypoint", None))
         self.btnUser3.setText(_translate("MainWindow", "Play waypoints", None))
-        self.btnUser4.setText(_translate("MainWindow", "USER 4", None))
+        self.btnUser4.setText(_translate("MainWindow", "Play wapoints(TP)", None))
         self.btnUser5.setText(_translate("MainWindow", "USER 5", None))
         self.btnUser6.setText(_translate("MainWindow", "USER 6", None))
         self.btnUser7.setText(_translate("MainWindow", "USER 7", None))
