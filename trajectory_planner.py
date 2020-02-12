@@ -23,11 +23,13 @@ class TrajectoryPlanner():
         self.initial_wp = None
         self.final_wp = None
         self.dt = 0.05 # command rate
+        self.desired_speed = None
 
     def set_initial_wp(self):
         """!
         @brief      TODO: Sets the initial wp to the current position.
         """
+        self.initial_wp = self.rexarm.get_positions()
         pass
 
     def set_final_wp(self, waypoint):
@@ -36,6 +38,7 @@ class TrajectoryPlanner():
 
         @param      waypoint  The waypoint
         """
+        self.final_wp = waypoint
         pass
 
     def go(self, max_speed=2.5):
@@ -62,6 +65,10 @@ class TrajectoryPlanner():
 
         @return     The amount of time to get to the final waypoint.
         """
+        joint_dist_to_cover = np.asarray(final_wp) - np.asarray(initial_wp)
+        max_joint_dist_to_cover = np.max(joint_dist_to_cover)
+        T = max_joint_dist_to_cover / max_speed
+        return T
         pass
 
     def generate_cubic_spline(self, initial_wp, final_wp, T):
@@ -74,6 +81,7 @@ class TrajectoryPlanner():
 
         @return     The plan as num_steps x num_joints np.array
         """
+
         pass
 
     def execute_plan(self, plan, look_ahead=8):

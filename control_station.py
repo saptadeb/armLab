@@ -187,6 +187,9 @@ class Gui(QMainWindow):
         self.ui.btnUser1.clicked.connect(partial(nxt_if_arm_init, 'calibrate'))
         ##OUR_CODE
         self.ui.btn_exec.clicked.connect(self.execute)
+        self.ui.btnUser2.clicked.connect(self.record)
+        self.ui.btnUser3.clicked.connect(self.playback)
+        self.ui.btnUser4.clicked.connect(self.execute_tp)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -268,6 +271,16 @@ class Gui(QMainWindow):
 
     def execute(self):
         self.sm.set_next_state("execute")
+
+    def record(self):
+        self.sm.set_next_state("record")
+
+    def playback(self):
+        self.sm.set_next_state("playback")
+
+    def execute_tp(self):
+        self.sm.set_next_state("execute_tp")
+
 
     def sliderChange(self):
         """!

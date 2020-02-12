@@ -4,6 +4,7 @@ The state machine that implements the logic.
 
 import time
 import numpy as np
+from numpy import genfromtxt
 
 class StateMachine():
     """!
@@ -77,8 +78,38 @@ class StateMachine():
         if self.next_state == "manual":
             self.manual()
 
+        if self.next_state == "record":
+            self.record()
+
+        if self.next_state == "playback":
+            self.playback()
+
+
 
     """Functions run for each state"""
+    def record(self):
+        torque_limit_cmds = [0] * len(self.rexarm._joints)
+        for joint in self.rexarm._joints:
+            joint.torque_limit = 0
+        current_config = self.rexarm.get_positions()
+        print (current_config)
+        f = open("waypoints.csv", "a")
+        for joint_num, angle in enumerate(current_config):
+            if joint_num == len(current_config) - 1:
+                f.write(str(angle) + '\n')
+            else:
+                f.write(str(angle) + ',')
+        f.close()
+        self.set_next_state("estop")
+
+    def playback(self):
+        waypoints = genfromtxt("waypoints.csv", delimiter=',')
+        (num_wp, num_joints) = waypoints.shape
+        for wp in range(num_wp):
+            wp_list = waypoints[wp,:].tolist()
+            self.rexarm.set_positions(wp_list)
+            time.sleep(1)
+        self.set_next_state("idle")
 
     def manual(self):
         """!
