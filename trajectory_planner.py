@@ -30,6 +30,7 @@ class TrajectoryPlanner():
         @brief      TODO: Sets the initial wp to the current position.
         """
         self.initial_wp = self.rexarm.get_positions()
+        # print(f"initial_waypoints:{self.initial_wp}")
         pass
 
     def set_final_wp(self, waypoint):
@@ -39,6 +40,7 @@ class TrajectoryPlanner():
         @param      waypoint  The waypoint
         """
         self.final_wp = waypoint
+        # print(f"final_waypoint:{self.final_wp}")
         pass
 
     def go(self, max_speed=2.5):
@@ -48,10 +50,11 @@ class TrajectoryPlanner():
         @param      max_speed  The maximum speed
         """
         self.set_initial_wp()
-        self.set_final_wp([-0.7832884252188035,-0.09436285675897427,-0.02531686437435887,-0.007677401401759543])
-        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 0.25)
-        plan = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
-        self.execute_plan(plan)
+        # self.set_final_wp([-0.01611073205641045,0.0038358879658120237,1.5765501589487174,-0.0025591338005868103])
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 2.5)
+        (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        self.execute_plan(pose_plan, velocity_plan)
+        time.sleep(T*2.5)
         pass
 
     def stop(self):
@@ -72,9 +75,11 @@ class TrajectoryPlanner():
         @return     The amount of time to get to the final waypoint.
         """
         joint_dist_to_cover = np.absolute(np.asarray(final_wp) - np.asarray(initial_wp))
+        # print(f"joint_dist_to_cover:{joint_dist_to_cover}")
         max_joint_dist_to_cover = np.max(joint_dist_to_cover)
+        # print(f"max:{max_joint_dist_to_cover}")
         T = max_joint_dist_to_cover / max_speed
-        print(joint_dist_to_cover)
+        # print(f"TimeTot:{T}")
         return T
         pass
 
@@ -93,31 +98,36 @@ class TrajectoryPlanner():
         Vf = 0
         numSteps = int(T / self.dt)
         numJoints = len(initial_wp)
-        result = np.zeros([numSteps, numJoints])
+        pose_plan = np.zeros([numSteps, numJoints])
+        velocity_plan = np.zeros([numSteps, numJoints])
         M = self.getM(T0, T)
-        print(T)
+        # print(f"time matrix:{M}")
         M_inv = np.linalg.inv(M)
+        # print(f"time_mat_inv:{M_inv}")
         parameters = []
         for i in range(numJoints):
             constraint = np.array([[initial_wp[i]],[V0],[final_wp[i]],[Vf]])
             parameter = np.dot(M_inv, constraint) 
             parameters.append(parameter)
-
+        # print(f"params:{parameters}")
         t = T0
         for i in range(numSteps):
             for j in range(numJoints):
-                timeVector = np.array([[0],[t],[t**2],[t**3]])
-                result[i,j] = np.dot(timeVector, parameters[j])
-                t = t + dt
-                
-        return result
+                timeVector = np.array([[1],[t],[t**2],[t**3]])
+                pose_plan[i,j] = np.dot(timeVector.T, parameters[j])
+                velTimeVec = np.array([[0],[1],[2*t],[3*t**2]])
+                velocity_plan[i,j] = np.dot(velTimeVec.T, parameters[j])
+            t = t + self.dt
+            # print(f"time:{t} | plan:{result[i,:]}")
+              
+        return pose_plan, velocity_plan
 
     def getM(self, T0, T):
         M = np.array([[1,T0,T0**2,T0**3],[0,1,2*T0,3*T0**2],[1,T,T**2,T**3],[0,1,2*T,3*T**2]])
         return M
         # return np.matrix('1 T0 T0**2 T0**3; 0 1 2*T0 3*T0**2; 1 T T**2 T**3; 0 1 2*T 3*T**2')
 
-    def execute_plan(self, plan, look_ahead=8):
+    def execute_plan(self, pose_plan, velocity_plan, look_ahead=8):
         """!
         @brief      TODO: Execute the planed trajectory.
 
@@ -125,7 +135,10 @@ class TrajectoryPlanner():
         @param      look_ahead  The look ahead
         """
         self.idle = False
-        for q in plan:
+        for q,v in zip(pose_plan,velocity_plan):
             q_list = q.tolist()
-            self.set_positions(q_list)
+            v_list = v.tolist()
+            self.rexarm.set_positions(q_list)
+            self.rexarm.set_speeds(v_list)
+            # print(q_list)
         pass

@@ -158,14 +158,21 @@ class StateMachine():
         self.status_message = "State: Execute TP - Executing Motion Plan with trajectory planner"
         self.current_state = "execute"
         self.next_state = "idle"
-        waypoints = []
-        for wp in self.waypoints:
-            full_wp = [0.0] * self.rexarm.num_joints
-            full_wp[0:len(wp)] = wp
-            waypoints.append(full_wp)
+        waypoints = genfromtxt("waypoints.csv", delimiter=',')
+        (num_wp, num_joints) = waypoints.shape
+        for wp in range(num_wp):
+            print(f"waypoint:{wp}")
+            wp_list = waypoints[wp,:].tolist()
+            self.tp.set_final_wp(wp_list)
+            self.tp.go()
             # TODO: Send the waypoints to the trajectory planner and break if estop
-        self.tp.go()
+        # self.tp.set_final_wp([-0.01611073205641045,0.0038358879658120237,1.5765501589487174,-0.0025591338005868103])
+        # self.tp.go()
+        # time.sleep(1.0)
+        # self.tp.set_final_wp([-0.01611073205641045,0.0038358879658120237,0.0,-0.0025591338005868103])
+        # self.tp.go()
         # for wp_num in range(waypoints.shape[0] - 1):
+        self.set_next_state("idle")
 
 
     def calibrate(self):
