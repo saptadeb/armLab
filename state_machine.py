@@ -160,18 +160,16 @@ class StateMachine():
         self.next_state = "idle"
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
         (num_wp, num_joints) = waypoints.shape
+        actual_joint_positions = []
         for wp in range(num_wp):
             print(f"waypoint:{wp}")
             wp_list = waypoints[wp,:].tolist()
             self.tp.set_final_wp(wp_list)
             self.tp.go()
+            while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.1):
+                time.sleep(0.01)
+                print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
             # TODO: Send the waypoints to the trajectory planner and break if estop
-        # self.tp.set_final_wp([-0.01611073205641045,0.0038358879658120237,1.5765501589487174,-0.0025591338005868103])
-        # self.tp.go()
-        # time.sleep(1.0)
-        # self.tp.set_final_wp([-0.01611073205641045,0.0038358879658120237,0.0,-0.0025591338005868103])
-        # self.tp.go()
-        # for wp_num in range(waypoints.shape[0] - 1):
         self.set_next_state("idle")
 
 

@@ -51,10 +51,10 @@ class TrajectoryPlanner():
         """
         self.set_initial_wp()
         # self.set_final_wp([-0.01611073205641045,0.0038358879658120237,1.5765501589487174,-0.0025591338005868103])
-        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 2.5)
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 1.5)
         (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
         self.execute_plan(pose_plan, velocity_plan)
-        time.sleep(T*2.5)
+        # time.sleep(T*2.5)
         pass
 
     def stop(self):
