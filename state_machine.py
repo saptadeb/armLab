@@ -87,12 +87,22 @@ class StateMachine():
 
 
     """Functions run for each state"""
+
     def record(self):
+        """!
+        @brief      Record waypoints manually
+        """
+        self.status_message = "State: Record - Manually guide the rexarm and hit record"
+        self.current_state = "record"
+
+        # Disable torque to enable manual guiding
         torque_limit_cmds = [0] * len(self.rexarm._joints)
         for joint in self.rexarm._joints:
             joint.torque_limit = 0
+
         current_config = self.rexarm.get_positions()
-        print (current_config)
+
+        #Write current configuration as a csv row into a csv file
         f = open("waypoints.csv", "a")
         for joint_num, angle in enumerate(current_config):
             if joint_num == len(current_config) - 1:
@@ -100,15 +110,23 @@ class StateMachine():
             else:
                 f.write(str(angle) + ',')
         f.close()
+
         self.set_next_state("estop")
 
     def playback(self):
+        """
+        @brief      Playback the recorded waypoints in waypoints.csv
+        """
+        self.status_message = "State: Playback - Playing the recorded moves within waypoints.csv"
+        self.current_state = "playback"
+
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
         (num_wp, num_joints) = waypoints.shape
         for wp in range(num_wp):
             wp_list = waypoints[wp,:].tolist()
             self.rexarm.set_positions(wp_list)
             time.sleep(1)
+            
         self.set_next_state("idle")
 
     def manual(self):
