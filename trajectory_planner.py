@@ -93,12 +93,12 @@ class TrajectoryPlanner():
         numJoints = len(initial_wp)
         pose_plan = np.zeros([numSteps, numJoints])
         velocity_plan = np.zeros([numSteps, numJoints])
-        M = self.getM(T0, T)
+        M = self.getCubicCoeffs(T0, T)(T0, T)
         M_inv = np.linalg.inv(M)
         parameters = []
         for i in range(numJoints):
             constraint = np.array([[initial_wp[i]],[V0],[final_wp[i]],[Vf]])
-            parameter = np.dot(M_inv, constraint) 
+            parameter = np.dot(M_inv, constraint)
             parameters.append(parameter)
         t = T0
         for i in range(numSteps):
@@ -108,11 +108,58 @@ class TrajectoryPlanner():
                 velTimeVec = np.array([[0],[1],[2*t],[3*t**2]])
                 velocity_plan[i,j] = np.dot(velTimeVec.T, parameters[j])
             t = t + self.dt
-              
+
         return pose_plan, velocity_plan
 
-    def getM(self, T0, T):
+    def getCubicCoeffs(self, T0, T):
         M = np.array([[1,T0,T0**2,T0**3],[0,1,2*T0,3*T0**2],[1,T,T**2,T**3],[0,1,2*T,3*T**2]])
+        return M
+
+    def generate_quintic_spline(self, initial_wp, final_wp, T):
+        """!
+        @brief      TODO generate a quintic spline
+
+        @param      initial_wp  The initial wp
+        @param      final_wp    The final wp
+        @param      T           Amount of time to get from initial to final waypoint
+
+        @return     The plan as num_steps x num_joints np.array
+        """
+        T0 = 0
+        V0 = 0
+        Vf = 0
+        a0 = 0
+        af = 0
+        numSteps = int(T / self.dt)
+        numJoints = len(initial_wp)
+        pose_plan = np.zeros([numSteps, numJoints])
+        velocity_plan = np.zeros([numSteps, numJoints])
+        M = self.getQuinticCoeffs(T0, T)
+        M_inv = np.linalg.inv(M)
+        parameters = []
+        for i in range(numJoints):
+            constraint = np.array([[initial_wp[i]],[V0],[a0],[final_wp[i]],[Vf],[af]])
+            parameter = np.dot(M_inv, constraint)
+            parameters.append(parameter)
+        t = T0
+        for i in range(numSteps):
+            for j in range(numJoints):
+                timeVector = np.array([[1],[t],[t**2],[t**3],[t**4],[t**5]])
+                pose_plan[i,j] = np.dot(timeVector.T, parameters[j])
+                velTimeVec = np.array([[0],[1],[2*t],[3*t**2],[4*t**3],[5*t**4]])
+                velocity_plan[i,j] = np.dot(velTimeVec.T, parameters[j])
+            t = t + self.dt
+
+        return pose_plan, velocity_plan
+
+    def getQuinticCoeffs(self, T0, T):
+        M = np.array(
+                    [
+                     [1,T0,T0**2,T0**3,T0**4,T0**5] , [0,1,2*T0,3*T0**2,4*T0**3,5*T0**4],
+                     [0,0,2,6*T0,12*T0**2,20*T0**3] , [1,T,T**2,T**3,T**4,T**5],
+                     [0,1,2*T,3*T**2,4*T**3,5*T**4] , [0,0,2,6*T,12*T**2,20*T**3]
+                    ]
+                    )
         return M
 
     def execute_plan(self, pose_plan, velocity_plan, look_ahead=8):
