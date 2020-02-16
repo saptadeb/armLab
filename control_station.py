@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import time
 from functools import partial
+import csv
 
 from PyQt4.QtCore import (QThread, Qt, pyqtSignal, pyqtSlot, QTimer)
 from PyQt4.QtGui import (QPixmap, QImage, QApplication, QWidget, QLabel, QMainWindow, QCursor)
@@ -169,7 +170,7 @@ class Gui(QMainWindow):
         self.rexarm = Rexarm()
         self.tp = TrajectoryPlanner(self.rexarm)
         self.sm = StateMachine(self.rexarm, self.tp, self.kinect)
-
+        self.sm.is_logging = False
         """
         Attach Functions to Buttons & Sliders
         TODO: NAME AND CONNECT BUTTONS AS NEEDED
@@ -190,6 +191,7 @@ class Gui(QMainWindow):
         self.ui.btnUser2.clicked.connect(self.record)
         self.ui.btnUser3.clicked.connect(self.playback)
         self.ui.btnUser4.clicked.connect(self.execute_tp)
+        self.ui.btnUser5.clicked.connect(self.toggle_logging)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -280,6 +282,16 @@ class Gui(QMainWindow):
 
     def execute_tp(self):
         self.sm.set_next_state("execute_tp")
+
+    def toggle_logging(self):
+        if not self.sm.is_logging:
+            # with open('log_data.csv', 'a') as log_file:
+            self.rexarm.log_file = open('log_data.csv','a')
+            self.rexarm.csv_writer = csv.writer(self.rexarm.log_file, delimiter=',')
+            self.sm.is_logging = True
+        else:
+            self.rexarm.log_file.close()
+            self.sm.is_logging = False
 
 
     def sliderChange(self):

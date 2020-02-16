@@ -48,8 +48,9 @@ class TrajectoryPlanner():
         @param      max_speed  The maximum speed
         """
         self.set_initial_wp()
-        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 1.5)
-        (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 1.6)
+        # (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        (pose_plan, velocity_plan) = self.generate_quintic_spline(self.initial_wp, self.final_wp, T)
         self.execute_plan(pose_plan, velocity_plan)
         pass
 
@@ -93,7 +94,7 @@ class TrajectoryPlanner():
         numJoints = len(initial_wp)
         pose_plan = np.zeros([numSteps, numJoints])
         velocity_plan = np.zeros([numSteps, numJoints])
-        M = self.getCubicCoeffs(T0, T)(T0, T)
+        M = self.getCubicCoeffs(T0, T)
         M_inv = np.linalg.inv(M)
         parameters = []
         for i in range(numJoints):

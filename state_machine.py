@@ -110,7 +110,7 @@ class StateMachine():
             else:
                 f.write(str(angle) + ',')
         f.close()
-
+        self.check_and_log()
         self.set_next_state("estop")
 
     def playback(self):
@@ -126,7 +126,8 @@ class StateMachine():
             wp_list = waypoints[wp,:].tolist()
             self.rexarm.set_positions(wp_list)
             time.sleep(1)
-            
+
+        self.check_and_log()
         self.set_next_state("idle")
 
     def manual(self):
@@ -135,6 +136,7 @@ class StateMachine():
         """
         self.status_message = "State: Manual - Use sliders to control arm"
         self.current_state = "manual"
+        self.check_and_log()
 
     def idle(self):
         """!
@@ -142,6 +144,7 @@ class StateMachine():
         """
         self.status_message = "State: Idle - Waiting for input"
         self.current_state = "idle"
+        self.check_and_log()
 
     def estop(self):
         """!
@@ -150,6 +153,7 @@ class StateMachine():
         self.status_message = "EMERGENCY STOP - Check Rexarm and restart program"
         self.current_state = "estop"
         self.rexarm.disable_torque()
+        self.check_and_log()
 
     def execute(self):
         """!
@@ -163,6 +167,7 @@ class StateMachine():
             full_wp[0:len(wp)] = wp
             # TODO: Set the positions and break if estop is needed
             self.rexarm.set_positions(wp)
+            self.check_and_log()
             time.sleep(1)
             if (self.next_state == "estop"):
                 self.set_next_state("estop")
@@ -186,7 +191,8 @@ class StateMachine():
             self.tp.go()
             while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.1):
                 time.sleep(0.01)
-                print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
+                self.check_and_log()
+                #print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
             # TODO: Send the waypoints to the trajectory planner and break if estop
         self.set_next_state("idle")
 
@@ -239,3 +245,8 @@ class StateMachine():
             self.status_message = "State: Failed to initialize the rexarm!"
             time.sleep(5)
         self.next_state = "idle"
+
+    def check_and_log(self):
+        if self.is_logging:
+            currRexConfig = self.rexarm.get_positions()
+            self.rexarm.csv_writer.writerow(currRexConfig)
