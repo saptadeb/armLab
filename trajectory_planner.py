@@ -52,9 +52,9 @@ class TrajectoryPlanner():
         self.is_init = is_init
         self.is_final = is_final
         self.set_initial_wp()
-        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 1.6)
-        (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
-        #(pose_plan, velocity_plan) = self.generate_quintic_spline(self.initial_wp, self.final_wp, T)
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 2.5)
+        #(pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        (pose_plan, velocity_plan) = self.generate_quintic_spline(self.initial_wp, self.final_wp, T)
         self.execute_plan(pose_plan, velocity_plan)
         pass
 
