@@ -169,26 +169,26 @@ class Kinect():
         # pts2 = coord2[0:3].astype(np.float32)
         # print(cv2.getAffineTransform(pts1, pts2))
         # return cv2.getAffineTransform(pts1, pts2)
-        
+
         # Assume coord1 is an array of source/pixel and coord2 is known dst coordinates
         N, K = coord1.shape
         A = np.zeros([2 * N, 2 * K])
 
         # Build matrix A from pixels
         for i in range(N):
-            A[2 * i     , 0 : K] = coord[i, 0 : K].astype(np.float32) 
+            A[2 * i     , 0 : K] = coord[i, 0 : K].astype(np.float32)
             A[2 * i     , K    ] = 1
-            A[2 * i + 1 , 0 : K] = coord[i, 0 : K].astype(np.float32) 
+            A[2 * i + 1 , 0 : K] = coord[i, 0 : K].astype(np.float32)
             A[2 * i + 1 , K    ] = 1
 
         # Build b vector
         b = np.zeros([2 * N])
         for i in range(N):
-            b[2 * i : 2 * i + 1] = coord[i, 0 : K].astype(np.float32) 
+            b[2 * i : 2 * i + 1] = coord[i, 0 : K].astype(np.float32)
 
         # Compute solution using peseudo inverse
-        x = (np.linalg.inv(A.transpose().dot(A)).dot(A.transpose()).dot(b)
-        transformMatrixTop = np.reshape(x, [2, 3])
+        x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
+        transformMatrixTop = np.reshape(x, (2,3))
         transformMatrixBtm = np.array([0, 0, 1])
         result = np.concatenate((transformMatrixTop, transformMatrixBtm), axis=0)
         return result
