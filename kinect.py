@@ -176,18 +176,18 @@ class Kinect():
 
         # Build matrix A from pixels
         for i in range(N):
-            A[2 * i     , 0 : K] = coord[i, 0 : K].astype(np.float32) 
+            A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
             A[2 * i     , K    ] = 1
-            A[2 * i + 1 , 0 : K] = coord[i, 0 : K].astype(np.float32) 
+            A[2 * i + 1 , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
             A[2 * i + 1 , K    ] = 1
 
         # Build b vector
         b = np.zeros([2 * N])
         for i in range(N):
-            b[2 * i : 2 * i + 1] = coord[i, 0 : K].astype(np.float32) 
+            b[2 * i : 2 * i + 1] = coord2[i, 0 : K].astype(np.float32) 
 
         # Compute solution using peseudo inverse
-        x = (np.linalg.inv(A.transpose().dot(A)).dot(A.transpose()).dot(b)
+        x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
         transformMatrixTop = np.reshape(x, [2, 3])
         transformMatrixBtm = np.array([0, 0, 1])
         result = np.concatenate((transformMatrixTop, transformMatrixBtm), axis=0)
@@ -204,7 +204,8 @@ class Kinect():
 
         @return     { description_of_the_return_value }
         """
-        pass
+        M = self.getAffineTransform(self.rgb_click_points, self.depth_click_points)
+        return cv2.warpAffine(frame,M,frame.shape)
 
     def loadCameraCalibration(self, file):
         """!
