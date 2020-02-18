@@ -235,6 +235,8 @@ class StateMachine():
                     self.kinect.new_click = False
 
         """TODO Perform camera calibration here"""
+        boardCoords = np.array([[-0.304,-0.310],[-0.304,0.298],[0.305,0.298],[0.305,-0.310],[0,0]])
+        worldTokinect = self.kinect.getAffineTransform(self.kinect.rgb_click_points, boardCoords)
         print(self.kinect.rgb_click_points)
         print(self.kinect.depth_click_points)
 

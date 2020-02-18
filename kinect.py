@@ -77,13 +77,11 @@ class Kinect():
             self.loadVideoFrame()
         self.processVideoFrame()
 
-
     def processVideoFrame(self):
         """!
         @brief      Process a video frame
         """
         cv2.drawContours(self.VideoFrame,self.block_contours,-1,(255,0,255),3)
-
 
     def captureDepthFrame(self):
         """!
