@@ -184,21 +184,22 @@ class StateMachine():
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
         (num_wp, num_joints) = waypoints.shape
         actual_joint_positions = []
-        for wp in range(num_wp):
+        for wp in range(1,num_wp):
             print(f"waypoint:{wp}")
             wp_list = waypoints[wp,:].tolist()
             self.tp.set_final_wp(wp_list)
-            # if wp == 0:
-            #     self.tp.go(is_final=False)
-            # elif wp == num_wp - 1:
-            #     self.tp.go(is_init = False)
-            # else:
-            #     self.tp.go(is_init = False, is_final=False)
-            self.tp.go()
-            while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.1):
+            if wp == 1:
+                self.tp.go(is_final=False)
+            elif wp == num_wp - 1:
+                self.tp.go(is_init = False)
+            else:
+                self.tp.go(is_init = False, is_final=False)
+            print(f"is_init: {self.tp.is_init} | is_final: {self.tp.is_final}")
+            # self.tp.go()
+            while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.15):
                 time.sleep(0.01)
                 self.check_and_log()
-                print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
+                #print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
             # TODO: Send the waypoints to the trajectory planner and break if estop
         self.set_next_state("idle")
 

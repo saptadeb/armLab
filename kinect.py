@@ -169,7 +169,7 @@ class Kinect():
         # pts2 = coord2[0:3].astype(np.float32)
         # print(cv2.getAffineTransform(pts1, pts2))
         # return cv2.getAffineTransform(pts1, pts2)
-        
+
         # Assume coord1 is an array of source/pixel and coord2 is known dst coordinates
         N, K = coord1.shape
         A = np.zeros([2 * N, 2 * K])
