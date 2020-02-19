@@ -236,8 +236,10 @@ class StateMachine():
 
         """TODO Perform camera calibration here"""
         boardCoords = np.array([[-0.304,-0.310],[-0.304,0.298],[0.305,0.298],[0.305,-0.310],[0,0]])
-        worldTokinect = self.kinect.getAffineTransform(self.kinect.rgb_click_points, boardCoords)
+        self.kinect.world2rgb_affine = self.kinect.getAffineTransform(self.kinect.rgb_click_points, boardCoords)
         print(self.kinect.rgb_click_points)
+
+        self.kinect.depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
         print(self.kinect.depth_click_points)
 
         self.status_message = "Calibration - Completed Calibration"

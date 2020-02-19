@@ -169,26 +169,29 @@ class Kinect():
         # return cv2.getAffineTransform(pts1, pts2)
 
         # Assume coord1 is an array of source/pixel and coord2 is known dst coordinates
+        coord1 = np.hstack((coord1, np.ones([coord1.shape[0],1])))
         N, K = coord1.shape
+        M, L = coord2.shape
         A = np.zeros([2 * N, 2 * K])
 
         # Build matrix A from pixels
         for i in range(N):
-            A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
-            A[2 * i     , K    ] = 1
-            A[2 * i + 1 , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
-            A[2 * i + 1 , K    ] = 1
+            A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32)
+            #A[2 * i     , K    ] = 1
+            A[2 * i + 1 , K : ] = coord1[i, 0 : K].astype(np.float32)
+            #A[2 * i + 1 , K    ] = 1
 
         # Build b vector
         b = np.zeros([2 * N])
         for i in range(N):
-            b[2 * i : 2 * i + 1] = coord2[i, 0 : K].astype(np.float32) 
+            b[2 * i : 2 * i + 2] = coord2[i, 0 : L].astype(np.float32)
 
         # Compute solution using peseudo inverse
         x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
         transformMatrixTop = np.reshape(x, [2, 3])
-        transformMatrixBtm = np.array([0, 0, 1])
-        result = np.concatenate((transformMatrixTop, transformMatrixBtm), axis=0)
+        # transformMatrixBtm = np.array([0, 0, 1])
+        # result = np.concatenate((transformMatrixTop, transformMatrixBtm), axis=0)
+        result = transformMatrixTop
         return result
 
     def registerDepthFrame(self, frame):
