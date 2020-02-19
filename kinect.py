@@ -43,7 +43,12 @@ class Kinect():
         self.new_click = False
         self.rgb_click_points = np.zeros((5,2),int)
         self.depth_click_points = np.zeros((5,2),int)
-
+        # Added fields:
+        self.cameraIntrinsicMatrix = np.zeros((3, 3))
+        self.cameraDistortionCoeff = np.zeros((5))
+        self.depth2rgb_affine3 = np.zeros((3, 3))
+        self.cameraFramePoints = np.zeros((5, 3))
+        self.cameraIntrinsicMatrix = np.zeros((4, 4))
         """ block info """
         self.block_contours = np.array([])
         self.block_detections = np.array([])
@@ -169,30 +174,57 @@ class Kinect():
         # return cv2.getAffineTransform(pts1, pts2)
 
         # Assume coord1 is an array of source/pixel and coord2 is known dst coordinates
-        coord1 = np.hstack((coord1, np.ones([coord1.shape[0],1])))
         N, K = coord1.shape
-        M, L = coord2.shape
-        A = np.zeros([2 * N, 2 * K])
 
-        # Build matrix A from pixels
-        for i in range(N):
-            A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32)
-            #A[2 * i     , K    ] = 1
-            A[2 * i + 1 , K : ] = coord1[i, 0 : K].astype(np.float32)
-            #A[2 * i + 1 , K    ] = 1
-
-        # Build b vector
-        b = np.zeros([2 * N])
-        for i in range(N):
-            b[2 * i : 2 * i + 2] = coord2[i, 0 : L].astype(np.float32)
-
-        # Compute solution using peseudo inverse
-        x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
-        transformMatrixTop = np.reshape(x, [2, 3])
-        # transformMatrixBtm = np.array([0, 0, 1])
-        # result = np.concatenate((transformMatrixTop, transformMatrixBtm), axis=0)
-        result = transformMatrixTop
-        return result
+        if K == 2:
+            A = np.zeros([2 * N, 2 * (K + 1)])
+        
+            # Build matrix A from pixels
+            for i in range(N):
+                A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
+                A[2 * i     , K    ] = 1
+                A[2 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32) 
+                A[2 * i + 1 , 2 * K + 1   ] = 1
+            # print(A)
+            # Build b vector
+            b = np.zeros([2 * N])
+            for i in range(N):
+                b[2 * i : 2 * i + 2] = coord2[i, 0 : K].astype(np.float32) 
+            # print(b)
+            # Compute solution using peseudo inverse
+            x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
+            # print(x)     
+            transformMatrixTop = np.reshape(x, [2, 3])
+            transformMatrixBtm = np.array([0, 0, 1])
+            result = np.vstack((transformMatrixTop, transformMatrixBtm))
+            # print(result)
+            return result
+        else:
+            A = np.zeros([3 * N, 3 * (K + 1)])
+        
+            # Build matrix A from pixels
+            for i in range(N):
+                A[3 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i     , K    ] = 1
+                A[3 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i + 1 , 2 * K + 1   ] = 1
+                A[3 * i + 2 , 2 * K + 2 : 3 * K + 2] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i + 2 , 3 * K + 2   ] = 1
+            # print(A)
+            # Build b vector
+            b = np.zeros([3 * N])
+            for i in range(N):
+                b[3 * i : 3 * i + 3] = coord2[i, 0 : K].astype(np.float32) 
+            # print(b)
+            # Compute solution using peseudo inverse
+            print(A.transpose().dot(A))
+            x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
+            # print(x)     
+            transformMatrixTop = np.reshape(x, [3, 4])
+            transformMatrixBtm = np.array([0, 0, 0, 1])
+            result = np.vstack((transformMatrixTop, transformMatrixBtm))
+            print(result)
+            return result
 
     def registerDepthFrame(self, frame):
         """!
@@ -205,7 +237,7 @@ class Kinect():
 
         @return     { description_of_the_return_value }
         """
-        M = self.getAffineTransform(self.rgb_click_points, self.depth_click_points)
+        M = self.getAffineTransform(self.depth_click_points, self.rgb_click_points)
         return cv2.warpAffine(frame,M,frame.shape)
 
     def loadCameraCalibration(self, file):
@@ -214,7 +246,9 @@ class Kinect():
 
         @param      file  The file
         """
-        pass
+        fileLines = file.readLines()
+        self.cameraIntrinsicMatrix = np.loadtxt(fileLines[1])
+        self.cameraDistortionCoeff = np.loadtxt(fileLines[3])
 
     def blockDetector(self):
         """!
@@ -232,3 +266,26 @@ class Kinect():
                     TODO: Implement a blob detector to find blocks in the depth image
         """
         pass
+
+    # Added functions:
+    def getDepth(self, d):
+        z_c = 0.1236 * np.tan(d/2842.5 + 1.1863)
+        return z_c
+
+    def pixel2Camera(self, rgbPixel2):
+        # Assume pixel has only two value
+        rgbPixel3 = np.array([rgbPixel2[0], rgbPixel2[1], 1])
+        depthRaw = self.DepthFrameRaw[rgbPixel2]
+        z_c = self.getDepth(depthRaw)
+        camerFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
+        return camerFrameCoord3
+
+    def getWorldCoord(self, rgbPixel2):
+        # This is used after calibration is done
+        # Assert rgbPixel only has 2 values
+        # Get depth value from raw depth. Raw depth is already warpped with rgb pixel
+        camerFrameCoord3 = self.pixel2Camera(rgbPixel2)
+        camerFrameCoord4 = np.vstack((camerFrameCoord3, np.array([1])))
+        worldFrameCoord4 = np.linalg.inv(self.cameraIntrinsicMatrix).dot(camerFrameCoord4)
+        return worldFrameCoord4
+

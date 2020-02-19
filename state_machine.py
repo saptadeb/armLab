@@ -235,14 +235,36 @@ class StateMachine():
                     self.kinect.new_click = False
 
         """TODO Perform camera calibration here"""
-        boardCoords = np.array([[-0.304,-0.310],[-0.304,0.298],[0.305,0.298],[0.305,-0.310],[0,0]])
-        self.kinect.world2rgb_affine = self.kinect.getAffineTransform(self.kinect.rgb_click_points, boardCoords)
-        print(self.kinect.rgb_click_points)
+        # Use mouse clicks to get pixel locations of known locations in the workspace   
+        # Repeat with the depth frame and use an affine transformation to register the two together.  
+        depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
+        self.kinect.depth2rgb_affine = depth2rgb_affine[0 : 2, :]
+        self.kinect.depth2rgb_affine3 = depth2rgb_affine
+        self.kinect.kinectCalibrated = True
+        self.kinect.captureDepthFrame()
 
-        self.kinect.depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
-        print(self.kinect.depth_click_points)
+        # Load intrinsic data
+        intrinsicFile = fopen('calibration.cfg', 'r')
+        self.kinect.loadCameraCalibration()
+        intrinsicFile.close()
 
-        self.status_message = "Calibration - Completed Calibration"
+        # Convert pixels to camera frame coordinates
+        for i in range(i):
+            self.kinect.cameraFramePoints[i] = self.kinect.pixel2Camera(self.kinect.rgb_click_points)
+        # Find extrinsic matrix by affine transformation
+        worldCoords = np.array([[-0.304,-0.310,0],[-0.304,0.298,0],[0.305,0.298,0],[0.305,-0.310,0],[0,0,0]])
+        self.cameraIntrinsicMatrix = self.kinect.getAffineTransform(worldCoords, self.kinect.cameraFramePoints)
+
+
+        # Using the intrinsic matrix you find for the RGB camera and the depth calibration function, create a 
+        # function that takes pixel coordinates from the image and returns workspace coordinates.
+        
+
+        
+        # print(self.kinect.depth_click_points)
+        # print(self.kinect.rgb_click_points)
+        
+        self.status_message = "Calibration - Completed Calibration"        
         time.sleep(1)
 
     def initialize_rexarm(self):
