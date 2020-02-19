@@ -146,6 +146,7 @@ class StateMachine():
         self.current_state = "idle"
         self.check_and_log()
 
+
     def estop(self):
         """!
         @brief      Emergency stop disable torque.
@@ -242,6 +243,7 @@ class StateMachine():
         self.kinect.depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
         print(self.kinect.depth_click_points)
 
+        self.kinect.kinectCalibrated = True
         self.status_message = "Calibration - Completed Calibration"
         time.sleep(1)
 
