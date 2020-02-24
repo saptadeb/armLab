@@ -235,7 +235,13 @@ class StateMachine():
                     i = i + 1
                     self.kinect.new_click = False
 
+        # print(self.kinect.rgb_click_points)
+        # print(self.kinect.depth_click_points)
+
+        # self.kinect.rgb_click_points = np.array([[139, 407], [151,  86], [494 , 97], [486, 420], [320, 247]])
+        # self.kinect.depth_click_points = np.array([[164, 410], [175 , 41], [541 , 54], [540, 425], [360 ,227]])
         """TODO Perform camera calibration here"""
+        # print(self.kinect.rgb_click_points)
         # Use mouse clicks to get pixel locations of known locations in the workspace   
         # Repeat with the depth frame and use an affine transformation to register the two together.
         depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
@@ -245,25 +251,26 @@ class StateMachine():
         self.kinect.captureDepthFrame()
 
         # Load intrinsic data
-        intrinsicFile = fopen('calibration.cfg', 'r')
-        self.kinect.loadCameraCalibration()
+        intrinsicFile = open('util/calibration.cfg', 'r')
+        self.kinect.loadCameraCalibration(intrinsicFile)
         intrinsicFile.close()
 
+        # Way 1
         # Convert pixels to camera frame coordinates
-        for i in range(i):
-            self.kinect.cameraFramePoints[i] = self.kinect.pixel2Camera(self.kinect.rgb_click_points)
-        # Find extrinsic matrix by affine transformation
-        worldCoords = np.array([[-0.304,-0.310,0],[-0.304,0.298,0],[0.305,0.298,0],[0.305,-0.310,0],[0,0,0]])
-        self.cameraIntrinsicMatrix = self.kinect.getAffineTransform(worldCoords, self.kinect.cameraFramePoints)
+        for i in range(5):
+            self.kinect.cameraFramePoints[i] = self.kinect.pixel2Camera(self.kinect.rgb_click_points[i])
 
+        print(self.kinect.cameraFramePoints)
+        # # Find extrinsic matrix by affine transformation
+        # worldCoords = np.array([[-0.304,-0.310,0.0001],[-0.304,0.298,0.0001],[0.305,0.298,0.0001],[0.305,-0.310,0.0001],[0,0,0.13]])
+        # self.kinect.camera2world_affine4 = self.kinect.getAffineTransform(self.kinect.cameraFramePoints, worldCoords)
+        # self.kinect.camera2world_affine3 = self.kinect.camera2world_affine3[0:3, :]
+        # self.kinect.cameraCalibrated = True
 
-        # Using the intrinsic matrix you find for the RGB camera and the depth calibration function, create a
-        # function that takes pixel coordinates from the image and returns workspace coordinates.
-
-
-
-        # print(self.kinect.depth_click_points)
-        # print(self.kinect.rgb_click_points)
+        # Way 2
+        worldCoords = np.array([[-0.304,-0.310,0.001],[-0.304,0.298,0.001],[0.305,0.298,0.001],[0.305,-0.310,0.001],[0,0,0.13]])
+        self.kinect.getExtrinsic(worldCoords)
+        self.kinect.cameraCalibrated = True
 
         self.status_message = "Calibration - Completed Calibration"
         time.sleep(1)

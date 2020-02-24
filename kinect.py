@@ -48,7 +48,11 @@ class Kinect():
         self.cameraDistortionCoeff = np.zeros((5))
         self.depth2rgb_affine3 = np.zeros((3, 3))
         self.cameraFramePoints = np.zeros((5, 3))
-        self.cameraIntrinsicMatrix = np.zeros((4, 4))
+        self.camera2world_affine3 = np.zeros((3, 4))
+        self.camera2world_affine4 = np.zeros((4, 4))
+        self.cameraExtrinsic3 = np.zeros((3, 3))
+        self.cameraExtrinsic4 = np.zeros((4, 4))
+        self.cameraCalibrated = False
         """ block info """
         self.block_contours = np.array([])
         self.block_detections = np.array([])
@@ -210,20 +214,20 @@ class Kinect():
                 A[3 * i + 1 , 2 * K + 1   ] = 1
                 A[3 * i + 2 , 2 * K + 2 : 3 * K + 2] = coord1[i, 0 : K].astype(np.float32) 
                 A[3 * i + 2 , 3 * K + 2   ] = 1
-            # print(A)
             # Build b vector
             b = np.zeros([3 * N])
             for i in range(N):
                 b[3 * i : 3 * i + 3] = coord2[i, 0 : K].astype(np.float32) 
+            # print(A)
             # print(b)
             # Compute solution using peseudo inverse
-            print(A.transpose().dot(A))
+            # print(A.transpose().dot(A))
             x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
             # print(x)     
             transformMatrixTop = np.reshape(x, [3, 4])
             transformMatrixBtm = np.array([0, 0, 0, 1])
             result = np.vstack((transformMatrixTop, transformMatrixBtm))
-            print(result)
+            # print(result)
             return result
 
     def registerDepthFrame(self, frame):
@@ -237,8 +241,8 @@ class Kinect():
 
         @return     { description_of_the_return_value }
         """
-        M = self.getAffineTransform(self.depth_click_points, self.rgb_click_points)
-        return cv2.warpAffine(frame,M,frame.shape)
+        # M = self.getAffineTransform(self.depth_click_points, self.rgb_click_points)
+        return cv2.warpAffine(frame,self.depth2rgb_affine,(640, 480))
 
     def loadCameraCalibration(self, file):
         """!
@@ -246,9 +250,16 @@ class Kinect():
 
         @param      file  The file
         """
-        fileLines = file.readLines()
-        self.cameraIntrinsicMatrix = np.loadtxt(fileLines[1])
-        self.cameraDistortionCoeff = np.loadtxt(fileLines[3])
+        # fileLines = file.readlines()
+
+        # self.cameraIntrinsicMatrix[0, :] = np.fromstring(fileLines[1])
+        # self.cameraIntrinsicMatrix[1, :] = np.fromstring(fileLines[2])
+        # self.cameraIntrinsicMatrix[2, :] = np.fromstring(fileLines[3])
+        self.cameraIntrinsicMatrix = np.array([[ 524.20336054,0.,300.47947718], [0.,523.18999732,277.66374865], [0.,0.,1.]])
+        self.cameraDistortionCoeff = np.array([2.6e-1, -9.14594098e-1, -2.82354497e-3, 1.13680542e-3, 1.20066203e+00])
+        # print(self.cameraIntrinsicMatrix)
+        # self.cameraDistortionCoeff = np.loadtxt(fileLines[3])
+
 
     def blockDetector(self):
         """!
@@ -274,18 +285,74 @@ class Kinect():
 
     def pixel2Camera(self, rgbPixel2):
         # Assume pixel has only two value
-        rgbPixel3 = np.array([rgbPixel2[0], rgbPixel2[1], 1])
-        depthRaw = self.DepthFrameRaw[rgbPixel2]
-        z_c = self.getDepth(depthRaw)
+        rgbPixel3 = np.array([rgbPixel2[1], rgbPixel2[0], 1])
+        # depthPixel3 = np.linalg.inv(self.depth2rgb_affine3).dot(rgbPixel3)
+        # depthRaw = self.DepthFrameRaw[int(depthPixel3[0]), int(depthPixel3[1])]
+        z_c = self.getDepth(self.DepthFrameRaw[rgbPixel2[1], rgbPixel2[0]])
         camerFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
         return camerFrameCoord3
 
-    def getWorldCoord(self, rgbPixel2):
-        # This is used after calibration is done
-        # Assert rgbPixel only has 2 values
-        # Get depth value from raw depth. Raw depth is already warpped with rgb pixel
-        camerFrameCoord3 = self.pixel2Camera(rgbPixel2)
-        camerFrameCoord4 = np.vstack((camerFrameCoord3, np.array([1])))
-        worldFrameCoord4 = np.linalg.inv(self.cameraIntrinsicMatrix).dot(camerFrameCoord4)
-        return worldFrameCoord4
+    def getWorldCoord(self, rgbPixel2): 
+        # Way 1
+        # # This is used after calibration is done
+        # # Assert rgbPixel only has 2 values
+        # # Get depth value from raw depth. Raw depth is already warpped with rgb pixel
+        # cameraFrameCoord3 = self.pixel2Camera(rgbPixel2)
+        # # print(cameraFrameCoord3)
+        # cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
+        # worldFrameCoord4 = self.camera2world_affine4.dot(cameraFrameCoord4)
+        # return worldFrameCoord4[0:3]
+
+        # Way 2
+        # z_c = self.getDepth(self.DepthFrameRaw[rgbPixel2[0], rgbPixel2[1]])
+        # cameraIntrinsicMatrix3x4 = self.cameraExtrinsic4[0:2, :]
+        # A = cameraIntrinsicMatrix3x4
+        # A = self.cameraIntrinsicMatrix.dot(self.cameraExtrinsic3)
+        # rgbPixel3 = np.array([rgbPixel2[0], rgbPixel2[1], 1])
+        # x = np.linalg.inv(A.transpose().dot(A)).dot(A.transpose()).dot(rgbPixel3)
+        # print(x)
+        # worldCoord3 = x[0:3]
+        # # worldCoord3 = np.linalg.inv(A).dot(rgbPixel3)
+        # # worldCoord3[0] = -worldCoord3[0]
+        # # worldCoord3[1] = -worldCoord3[1]
+        # # worldCoord3[2] = 0.93 - z_c
+        # return worldCoord3
+
+        # # Way 3
+        # z_c = self.getDepth(self.DepthFrameRaw[rgbPixel2[0], rgbPixel2[1]])
+        # rgbPixel3 = np.array([rgbPixel2[0], rgbPixel2[1], 1])
+        # # cameraFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
+        # cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
+        # worldFrameCoord4 = np.linalg.inv(self.cameraExtrinsic4).dot(cameraFrameCoord4)
+        # worldCoord3 = worldFrameCoord4[0:3]
+        # return cameraFrameCoord3
+
+        # Way 4
+        z_c = self.getDepth(self.DepthFrameRaw[rgbPixel2[0], rgbPixel2[1]])
+        rgbPixel3 = np.array([rgbPixel2[0], rgbPixel2[1], 1])
+        cameraFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
+        cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
+
+        
+        # _,extrinsicAffine3,_ = cv2.estimateAffine3D(self.cameraFramePoints, worldCoords)
+        worldFrameCoord3 = self.camera2world_affine3.dot(cameraFrameCoord4)
+        # cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
+        # worldFrameCoord4 =o np.linalg.inv(self.cameraExtrinsic4).dot(cameraFrameCoord4)
+        # worldCoord3 = worldFrameCoord4[0:3]
+        return worldFrameCoord3
+
+    def getExtrinsic(self, worldRefPoints):
+        rgb_click_points_float32 = self.rgb_click_points.astype(np.float32)
+        _, rot_vec, trans_vec = cv2.solvePnP(worldRefPoints, rgb_click_points_float32, self.cameraIntrinsicMatrix, self.cameraDistortionCoeff, flags = cv2.SOLVEPNP_ITERATIVE)
+        # print(trans_vec)
+        rot_mat, _ = cv2.Rodrigues(rot_vec) 
+        # print(rot_mat)
+        self.cameraExtrinsic3 = rot_mat
+        self.cameraExtrinsic3[:, 2] = trans_vec[:, 0]
+        self.cameraExtrinsic4 = np.column_stack((rot_mat, trans_vec))
+        self.cameraExtrinsic4 = np.vstack((self.cameraExtrinsic4, np.array([0,0,0,1])))
+        # print(self.cameraExtrinsic4)
+
+        self.camera2world_affine3= self.getAffineTransform(self.cameraFramePoints, worldRefPoints)[0:3, :]
+
 
