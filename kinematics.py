@@ -42,7 +42,14 @@ def FK_dh(dh_params, joint_angles, link):
 
     @return     a transformation matrix representing the pose of the desired link
     """
-    return np.eye(4)
+    H = np.eye(4)
+    # print((link))
+    for i in range(link-1, -1, -1):
+        # print (dh_params[i][3])
+        dh_params[i][3] = dh_params[i][3] + joint_angles[i]
+        H = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3]) @ H
+        # print(H)
+    return H
 
 def get_transform_from_dh(a, alpha, d, theta):
     """!
@@ -57,7 +64,13 @@ def get_transform_from_dh(a, alpha, d, theta):
 
     @return     The 4x4 transform matrix.
     """
-    return np.eye(4)
+
+    T = np.zeros([4,4])
+    T[0,:] = [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)]
+    T[1,:] = [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)]
+    T[2,:] = [0, np.sin(alpha), np.cos(alpha), d]
+    T[3,:] = [0,0,0,1]
+    return T
 
 def get_euler_angles_from_T(T):
     """!
@@ -69,7 +82,12 @@ def get_euler_angles_from_T(T):
 
     @return     The euler angles from T.
     """
-    return np.array([0, 0, 0],dtype=np.float32)
+    #ZYZ parameterization
+    euler = np.zeros([3,1])
+    euler[1] = np.arctan2(np.sqrt(T[2,0]**2 + T[2,1]**2) , T[2,2])
+    euler[0] = np.arctan2(T[1,2] / np.sin(euler[1]) , T[0,2] / np.sin(euler[1]))
+    euler[2] = np.arctan2(T[2,1] / np.sin(euler[1]) , T[2,0] / np.sin(euler[1]))
+    return euler
 
 def get_pose_from_T(T):
     """!
@@ -82,7 +100,10 @@ def get_pose_from_T(T):
 
     @return     The pose from T.
     """
-    return np.array([0, 0, 0, 0])
+    pose = np.zeros([4,1])
+    euler = get_euler_angles_from_T(T)
+    pose = [T[0,3], T[1,3], T[2,3], euler[1]]
+    return pose
 
 
 def FK_pox(joint_angles):
