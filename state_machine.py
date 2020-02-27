@@ -126,6 +126,9 @@ class StateMachine():
             wp_list = waypoints[wp,:].tolist()
             self.rexarm.set_positions(wp_list)
             time.sleep(1)
+            if (self.next_state == "estop"):
+                self.set_next_state("estop")
+                break
 
         self.check_and_log()
         self.set_next_state("idle")
@@ -242,7 +245,7 @@ class StateMachine():
         # self.kinect.depth_click_points = np.array([[164, 410], [175 , 41], [541 , 54], [540, 425], [360 ,227]])
         """TODO Perform camera calibration here"""
         # print(self.kinect.rgb_click_points)
-        # Use mouse clicks to get pixel locations of known locations in the workspace   
+        # Use mouse clicks to get pixel locations of known locations in the workspace
         # Repeat with the depth frame and use an affine transformation to register the two together.
         depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
         self.kinect.depth2rgb_affine = depth2rgb_affine[0 : 2, :]
