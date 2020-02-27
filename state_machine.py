@@ -205,7 +205,7 @@ class StateMachine():
                 self.check_and_log()
                 if (self.next_state == "estop"):
                     self.set_next_state("estop")
-                    break
+                    return
                 #print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
             # TODO: Send the waypoints to the trajectory planner and break if estop
         self.set_next_state("idle")

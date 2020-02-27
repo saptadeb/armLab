@@ -44,10 +44,14 @@ def FK_dh(dh_params, joint_angles, link):
     """
     H = np.eye(4)
     # print((link))
-    for i in range(link-1, -1, -1):
-        # print (dh_params[i][3])
+    # for i in range(link-1, -1, -1):
+    #     # print (dh_params[i][3])
+    #     dh_params[i][3] = dh_params[i][3] + joint_angles[i]
+    #     H = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3]) @ H
+    #     # print(H)
+    for i in range(link):
         dh_params[i][3] = dh_params[i][3] + joint_angles[i]
-        H = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3]) @ H
+        H = H @ get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3])
         # print(H)
     return H
 
