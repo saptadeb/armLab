@@ -789,7 +789,7 @@ class Ui_MainWindow(object):
         self.rdoutT.setText(_translate("MainWindow", "0", None))
         self.rdoutG.setText(_translate("MainWindow", "0", None))
         self.rdoutP.setText(_translate("MainWindow", "0", None))
-        self.btnUser1.setText(_translate("MainWindow", "USER 1", None))
+        self.btnUser1.setText(_translate("MainWindow", "Calibrate", None))
         self.btnUser2.setText(_translate("MainWindow", "Record Waypoint", None))
         self.btnUser3.setText(_translate("MainWindow", "Play waypoints", None))
         self.btnUser4.setText(_translate("MainWindow", "Play wapoints(TP)", None))
@@ -844,4 +844,3 @@ class Ui_MainWindow(object):
         self.WLabel_9.setText(_translate("MainWindow", "W3:", None))
         self.label_3.setText(_translate("MainWindow", "Status:", None))
         self.rdoutStatus.setText(_translate("MainWindow", "Waiting for Inputs", None))
-

@@ -126,6 +126,9 @@ class StateMachine():
             wp_list = waypoints[wp,:].tolist()
             self.rexarm.set_positions(wp_list)
             time.sleep(1)
+            if (self.next_state == "estop"):
+                self.set_next_state("estop")
+                break
 
         self.check_and_log()
         self.set_next_state("idle")
@@ -145,6 +148,7 @@ class StateMachine():
         self.status_message = "State: Idle - Waiting for input"
         self.current_state = "idle"
         self.check_and_log()
+
 
     def estop(self):
         """!
@@ -184,21 +188,25 @@ class StateMachine():
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
         (num_wp, num_joints) = waypoints.shape
         actual_joint_positions = []
-        for wp in range(num_wp):
+        for wp in range(1,num_wp):
             print(f"waypoint:{wp}")
             wp_list = waypoints[wp,:].tolist()
             self.tp.set_final_wp(wp_list)
-            # if wp == 0:
-            #     self.tp.go(is_final=False)
-            # elif wp == num_wp - 1:
-            #     self.tp.go(is_init = False)
-            # else:
-            #     self.tp.go(is_init = False, is_final=False)
-            self.tp.go()
-            while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.1):
+            if wp == 1:
+                self.tp.go(is_final=False)
+            elif wp == num_wp - 1:
+                self.tp.go(is_init = False)
+            else:
+                self.tp.go(is_init = False, is_final=False)
+            print(f"is_init: {self.tp.is_init} | is_final: {self.tp.is_final}")
+            # self.tp.go()
+            while( np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))  > 0.15):
                 time.sleep(0.01)
                 self.check_and_log()
-                print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
+                if (self.next_state == "estop"):
+                    self.set_next_state("estop")
+                    return
+                #print(f"waypoint:{np.asarray(wp_list)} | currPos:{np.asarray(self.rexarm.get_positions())} | Euclidean dist:{np.linalg.norm(np.asarray(wp_list) - np.asarray(self.rexarm.get_positions()))}")
             # TODO: Send the waypoints to the trajectory planner and break if estop
         self.set_next_state("idle")
 
@@ -233,9 +241,42 @@ class StateMachine():
                     i = i + 1
                     self.kinect.new_click = False
 
+        # print(self.kinect.rgb_click_points)
+        # print(self.kinect.depth_click_points)
+
+        # self.kinect.rgb_click_points = np.array([[139, 407], [151,  86], [494 , 97], [486, 420], [320, 247]])
+        # self.kinect.depth_click_points = np.array([[164, 410], [175 , 41], [541 , 54], [540, 425], [360 ,227]])
         """TODO Perform camera calibration here"""
-        print(self.kinect.rgb_click_points)
-        print(self.kinect.depth_click_points)
+        # print(self.kinect.rgb_click_points)
+        # Use mouse clicks to get pixel locations of known locations in the workspace
+        # Repeat with the depth frame and use an affine transformation to register the two together.
+        depth2rgb_affine = self.kinect.getAffineTransform(self.kinect.depth_click_points, self.kinect.rgb_click_points)
+        self.kinect.depth2rgb_affine = depth2rgb_affine[0 : 2, :]
+        self.kinect.depth2rgb_affine3 = depth2rgb_affine
+        self.kinect.kinectCalibrated = True
+        self.kinect.captureDepthFrame()
+
+        # Load intrinsic data
+        intrinsicFile = open('util/calibration.cfg', 'r')
+        self.kinect.loadCameraCalibration(intrinsicFile)
+        intrinsicFile.close()
+
+        # Way 1
+        # Convert pixels to camera frame coordinates
+        for i in range(5):
+            self.kinect.cameraFramePoints[i] = self.kinect.pixel2Camera(self.kinect.rgb_click_points[i])
+
+        print(self.kinect.cameraFramePoints)
+        # # Find extrinsic matrix by affine transformation
+        # worldCoords = np.array([[-0.304,-0.310,0.0001],[-0.304,0.298,0.0001],[0.305,0.298,0.0001],[0.305,-0.310,0.0001],[0,0,0.13]])
+        # self.kinect.camera2world_affine4 = self.kinect.getAffineTransform(self.kinect.cameraFramePoints, worldCoords)
+        # self.kinect.camera2world_affine3 = self.kinect.camera2world_affine3[0:3, :]
+        # self.kinect.cameraCalibrated = True
+
+        # Way 2
+        worldCoords = np.array([[-0.304,-0.310,0.001],[-0.304,0.298,0.001],[0.305,0.298,0.001],[0.305,-0.310,0.001],[0,0,0.13]])
+        self.kinect.getExtrinsic(worldCoords)
+        self.kinect.cameraCalibrated = True
 
         self.status_message = "Calibration - Completed Calibration"
         time.sleep(1)

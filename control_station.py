@@ -192,6 +192,7 @@ class Gui(QMainWindow):
         self.ui.btnUser3.clicked.connect(self.playback)
         self.ui.btnUser4.clicked.connect(self.execute_tp)
         self.ui.btnUser5.clicked.connect(self.toggle_logging)
+        self.ui.btnUser1.clicked.connect(self.calibrate)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -283,6 +284,9 @@ class Gui(QMainWindow):
     def execute_tp(self):
         self.sm.set_next_state("execute_tp")
 
+    def calibrate(self):
+        self.sm.set_next_state("calibrate")
+
     def toggle_logging(self):
         if not self.sm.is_logging:
             # with open('log_data.csv', 'a') as log_file:
@@ -352,9 +356,17 @@ class Gui(QMainWindow):
 
         @param      mouse_event  QtMouseEvent containing the pose of the mouse at the time of the event not current time
         """
-        if self.kinect.DepthFrameRaw.any() != 0:
-            self.ui.rdoutMousePixels.setText("(-,-,-)")
-            self.ui.rdoutMouseWorld.setText("(-,-,-)")
+        # if self.kinect.DepthFrameRaw.any() != 0:
+        #     self.ui.rdoutMousePixels.setText("(-,-,-)")
+        #     self.ui.rdoutMouseWorld.setText("(-,-,-)")
+        if self.kinect.cameraCalibrated:
+            pixel = np.array([mouse_event.y(), mouse_event.x()])
+            # cameraCoord = self.kinect.pixel2Camera(pixel)
+            worldCoord = self.kinect.getWorldCoord(pixel)
+            # print(worldCoord)
+            self.ui.rdoutMousePixels.setText(np.array2string(pixel))
+            # self.ui.rdoutMouseWorld.setText(np.array2string((worldCoord * 100).astype(int)))
+            self.ui.rdoutMouseWorld.setText(np.array2string((worldCoord)))
 
     def calibrateMousePress(self, mouse_event):
         """!
