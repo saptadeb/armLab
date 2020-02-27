@@ -151,4 +151,52 @@ def IK_geometric(dh_params, pose):
     @return     All four possible joint configurations in a numpy array 4x4 where each row is one possible joint
                 configuration
     """
-    return np.zeros((4,4))
+    #Variables
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    phi = pose[3]
+
+    #Constants
+    l1 = dh_params[0][2]
+    l2 = dh_params[2][0]
+    l3 = dh_params[3][0]
+    l4 = #TODO: Measure L4
+
+    #Inverse kinematics - Has 4 possible ways of reaching a particular point
+    """Forward"""
+    theta1_fwd  = np.arctan2(y,x)
+    A           = x - l4*np.cos(theta1_fwd)*np.cos(phi)
+    B           = y - l4*np.sin(theta1_fwd)*np.cos(phi)
+    c           = z - l1 - l4*np.sin(phi)
+    theta3_fwd  = np.arccos((A**2 + B**2 + c**2 - l2**2 - l3**2)/(2*l2*l3))
+    a           = l3*np.sin(theta3_fwd)
+    b           = l2 + l3*np.cos(theta3_fwd)
+    r           = np.sqrt(a**2 + b**2)
+    theta2_fwd_up    = np.arctan2(c,np.sqrt(r**2 - c**2)) - np.arctan2(a,b)
+    theta2_fwd_down    = np.arctan2(c,-np.sqrt(r**2 - c**2)) - np.arctan2(a,b)
+    theta4_fwd_up    = phi - (theta2_fwd_up + theta3_fwd)
+    theta4_fwd_down    = phi - (theta2_fwd_down + theta3_fwd)
+
+    """Backward"""
+    theta1_bkwd    = np.pi + np.arctan2(y,x)
+    A           = x - l4*np.cos(theta1_bkwd)*np.cos(phi)
+    B           = y - l4*np.sin(theta1_bkwd)*np.cos(phi)
+    c           = z - l1 - l4*np.sin(phi)
+    theta3_bkwd  = np.arccos((A**2 + B**2 + c**2 - l2**2 - l3**2)/(2*l2*l3))
+    a           = l3*np.sin(theta3_bkwd)
+    b           = l2 + l3*np.cos(theta3_bkwd)
+    r           = np.sqrt(a**2 + b**2)
+    theta2_bkwd_up    = np.arctan2(c,np.sqrt(r**2 - c**2)) - np.arctan2(a,b)
+    theta2_bkwd_down    = np.arctan2(c,-np.sqrt(r**2 - c**2)) - np.arctan2(a,b)
+    theta4_bkwd_up    = phi - (theta2_bkwd_up + theta3_bkwd)
+    theta4_bkwd_down    = phi - (theta2_bkwd_down + theta3_bkwd)
+
+    """Pack all 4 possible answers into a numpy matrix"""
+    joints = np.zeros((4,4))
+    joints[0,:] = [theta1_fwd, theta2_fwd_up, theta3_fwd, theta4_fwd_up]
+    joints[1,:] = [theta1_fwd, theta2_fwd_down, theta3_fwd, theta4_fwd_down]
+    joints[2,:] = [theta1_bkwd, theta2_bkwd_up, theta3_bkwd, theta4_bkwd_up]
+    joints[3,:] = [theta1_bkwd, theta2_bkwd_down, theta3_bkwd, theta4_bkwd_down]
+
+    return joints
