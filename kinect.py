@@ -8,6 +8,7 @@ from PyQt4.QtGui import QImage
 import freenect
 import os
 script_path = os.path.dirname(os.path.realpath(__file__))
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 class Kinect():
     """!
@@ -260,7 +261,6 @@ class Kinect():
         # print(self.cameraIntrinsicMatrix)
         # self.cameraDistortionCoeff = np.loadtxt(fileLines[3])
 
-
     def blockDetector(self):
         """!
         @brief      Detect blocks from rgb
@@ -268,7 +268,101 @@ class Kinect():
                     TODO: Implement your block detector here. You will need to locate blocks in 3D space and put their XYZ
                     locations in self.block_detections
         """
-        pass
+        # Load ref contour
+        contour_ref = np.load("blockdetector_dev/contour_ref.npy")
+
+        # Smoothing Kernel:
+        rgb = freenect.sync_get_video_with_res(resolution=freenect.RESOLUTION_HIGH)[0]
+        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        hsvImg = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+        cv2.imwrite("blockdetector_dev/testImage.png", bgr)
+
+        kernel = np.ones((5, 5), np.uint8)
+
+        # Crop the image to ignore backgroud
+        borderPoints = np.array([[880, 260], [190, 260], [183, 951], [875, 961]])
+        m, n, _ = hsvImg.shape
+        ctp1 = borderPoints[0, 0]
+        ctp2 = borderPoints[0, 1]
+        ctp3 = borderPoints[1, 0]
+        ctp4 = borderPoints[1, 1]
+        ctp5 = borderPoints[2, 0]
+        ctp6 = borderPoints[2, 1]
+        hsvImg[:, 0: ctp2] = np.array([0, 0, 100])
+        hsvImg[:, ctp6: n] = np.array([0, 0, 100])
+        hsvImg[0: ctp3, ctp4: ctp6] = np.array([0, 0, 100])
+        hsvImg[ctp1: m, ctp2: ctp6] = np.array([0, 0, 100])
+        whiteBoard = np.zeros([m, n, 3], dtype=np.uint8)
+        whiteBoard[:, :] = np.array([0, 0, 100], dtype=np.uint8)
+
+        # Define color constants
+        colors = ["yellow", "orange", "pink", "black", "red", "purple", "green", "blue"]
+        yellow_lo = np.array([23, 180, 150])
+        yellow_hi = np.array([35, 255, 255])
+        orange_lo = np.array([3, 190, 110])
+        orange_hi = np.array([9, 255, 170])
+        pink_lo = np.array([165, 190, 120])
+        pink_hi = np.array([178, 235, 180])
+        black_lo = np.array([0, 0, 0])
+        black_hi = np.array([180, 180, 40])
+        red_lo = np.array([0, 190, 80]) # Red is special
+        red_hi = np.array([10, 255, 120])
+        red2_lo = np.array([160, 140, 80])
+        red2_hi = np.array([180, 255, 120])
+        purple_lo = np.array([130, 80, 40])
+        purple_hi = np.array([180, 200, 100])
+        green_lo = np.array([40, 0, 50])
+        green_hi = np.array([70, 255, 120])
+        blue_lo = np.array([110, 90, 80])
+        blue_hi = np.array([120, 255, 120])
+
+        # colorRangesLo = [yellow_lo, orange_lo, pink_lo, black_lo, red_lo, purple_lo, green_lo, blue_lo]
+        # colorRangesHi = [yellow_hi, orange_hi, pink_hi, black_hi, red_hi, purple_hi, green_hi, blue_hi]
+        colorRangesLo = [yellow_lo, orange_lo, pink_lo, black_lo, red_lo, purple_lo, green_lo, blue_lo]
+        colorRangesHi = [yellow_hi, orange_hi, pink_hi, black_hi, red_hi, purple_hi, green_hi, blue_hi]
+
+        # Results
+        block_detections = []
+        allContours = []
+        # Ident for each color:
+        for k in range(len(colorRangesLo)):
+            colorRangeLo = colorRangesLo[k]
+            colorRangeHi = colorRangesHi[k]
+
+            inRangeMask = cv2.inRange(hsvImg, colorRangeLo, colorRangeHi)
+            inRangeMask = cv2.morphologyEx(inRangeMask, cv2.MORPH_CLOSE, kernel)
+            inRangeMask = cv2.morphologyEx(inRangeMask, cv2.MORPH_OPEN, kernel)
+            hsvImg_singleColor = cv2.bitwise_and(hsvImg, hsvImg, mask=inRangeMask)
+            contours, hierarchy = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Only for red
+            if (k == 4):
+                inRangeMask2 = cv2.inRange(hsvImg, red2_lo, red2_hi)
+                inRangeMask2 = cv2.morphologyEx(inRangeMask2, cv2.MORPH_CLOSE, kernel)
+                inRangeMask2 = cv2.morphologyEx(inRangeMask2, cv2.MORPH_OPEN, kernel)
+                hsvImg_singleColor2 = cv2.bitwise_and(hsvImg, hsvImg, mask=inRangeMask2)
+                hsvImg_singleColor = cv2.bitwise_or(hsvImg_singleColor, hsvImg_singleColor2)
+
+
+            for i in range(len(contours)):
+                contour = contours[i]
+                area = cv2.contourArea(contour)
+                if (area < 1400 or area > 2600):  # Filter too small ones
+                    continue
+                # print(cv2.matchShapes(contour, contour_ref, 1, 0.0))
+                if cv2.matchShapes(contour, contour_ref, 1, 0.0) > 0.2: # Filter absurd shapes
+                    continue
+                rect = cv2.minAreaRect(contour)
+                (center_y, center_x) = rect[0]
+                (width, height) = rect[1]
+                coutour_orientation = rect[2]
+                block_detections.append([int(center_x), int(center_y), width, height, area, coutour_orientation, k]) # TODO Format
+                allContours.append(contour)
+
+                print(colors[k] + " @ " + str(np.array([int(center_x / 2.1333), int(center_y / 2)])))
+                print(colors[k] + " @ " + str(self.getWorldCoord(np.array([int(center_x / 2.1333), int(center_y / 2)]))))
+
+        self.block_contours = allContours
 
     def detectBlocksInDepthImage(self):
         """!
@@ -342,17 +436,16 @@ class Kinect():
         return worldFrameCoord3
 
     def getExtrinsic(self, worldRefPoints):
-        rgb_click_points_float32 = self.rgb_click_points.astype(np.float32)
-        _, rot_vec, trans_vec = cv2.solvePnP(worldRefPoints, rgb_click_points_float32, self.cameraIntrinsicMatrix, self.cameraDistortionCoeff, flags = cv2.SOLVEPNP_ITERATIVE)
-        # print(trans_vec)
-        rot_mat, _ = cv2.Rodrigues(rot_vec) 
-        # print(rot_mat)
-        self.cameraExtrinsic3 = rot_mat
-        self.cameraExtrinsic3[:, 2] = trans_vec[:, 0]
-        self.cameraExtrinsic4 = np.column_stack((rot_mat, trans_vec))
-        self.cameraExtrinsic4 = np.vstack((self.cameraExtrinsic4, np.array([0,0,0,1])))
+        # rgb_click_points_float32 = self.rgb_click_points.astype(np.float32)
+        # _, rot_vec, trans_vec = cv2.solvePnP(worldRefPoints, rgb_click_points_float32, self.cameraIntrinsicMatrix, self.cameraDistortionCoeff, flags = cv2.SOLVEPNP_ITERATIVE)
+        # # print(trans_vec)
+        # rot_mat, _ = cv2.Rodrigues(rot_vec)
+        # # print(rot_mat)
+        # self.cameraExtrinsic3 = rot_mat
+        # self.cameraExtrinsic3[:, 2] = trans_vec[:, 0]
+        # self.cameraExtrinsic4 = np.column_stack((rot_mat, trans_vec))
+        # self.cameraExtrinsic4 = np.vstack((self.cameraExtrinsic4, np.array([0,0,0,1])))
         # print(self.cameraExtrinsic4)
 
         self.camera2world_affine3= self.getAffineTransform(self.cameraFramePoints, worldRefPoints)[0:3, :]
-
 

@@ -161,7 +161,7 @@ def IK_geometric(dh_params, pose):
     l1 = dh_params[0][2]
     l2 = dh_params[2][0]
     l3 = dh_params[3][0]
-    l4 = #TODO: Measure L4
+    # l4 = #TODO: Measure L4
 
     #Inverse kinematics - Has 4 possible ways of reaching a particular point
     """Forward"""

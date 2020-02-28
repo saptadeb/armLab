@@ -193,6 +193,7 @@ class Gui(QMainWindow):
         self.ui.btnUser4.clicked.connect(self.execute_tp)
         self.ui.btnUser5.clicked.connect(self.toggle_logging)
         self.ui.btnUser1.clicked.connect(self.calibrate)
+        self.ui.btnUser6.clicked.connect(self.blockDetect)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -286,6 +287,9 @@ class Gui(QMainWindow):
 
     def calibrate(self):
         self.sm.set_next_state("calibrate")
+
+    def blockDetect(self):
+        self.kinect.blockDetector()
 
     def toggle_logging(self):
         if not self.sm.is_logging:
