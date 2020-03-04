@@ -309,8 +309,8 @@ class Kinect():
         red_hi = np.array([10, 255, 120])
         red2_lo = np.array([160, 140, 80])
         red2_hi = np.array([180, 255, 120])
-        purple_lo = np.array([130, 80, 40])
-        purple_hi = np.array([180, 200, 100])
+        purple_lo = np.array([130, 60, 40])
+        purple_hi = np.array([160, 200, 120])
         green_lo = np.array([40, 0, 50])
         green_hi = np.array([70, 255, 120])
         blue_lo = np.array([110, 90, 80])
@@ -333,7 +333,7 @@ class Kinect():
             inRangeMask = cv2.morphologyEx(inRangeMask, cv2.MORPH_CLOSE, kernel)
             inRangeMask = cv2.morphologyEx(inRangeMask, cv2.MORPH_OPEN, kernel)
             hsvImg_singleColor = cv2.bitwise_and(hsvImg, hsvImg, mask=inRangeMask)
-            contours, hierarchy = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
 
             # Only for red
             if (k == 4):
@@ -342,7 +342,9 @@ class Kinect():
                 inRangeMask2 = cv2.morphologyEx(inRangeMask2, cv2.MORPH_OPEN, kernel)
                 hsvImg_singleColor2 = cv2.bitwise_and(hsvImg, hsvImg, mask=inRangeMask2)
                 hsvImg_singleColor = cv2.bitwise_or(hsvImg_singleColor, hsvImg_singleColor2)
+                inRangeMask = cv2.bitwise_or(inRangeMask, inRangeMask2)
 
+            contours, hierarchy = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             for i in range(len(contours)):
                 contour = contours[i]
@@ -350,7 +352,7 @@ class Kinect():
                 if (area < 1400 or area > 2600):  # Filter too small ones
                     continue
                 # print(cv2.matchShapes(contour, contour_ref, 1, 0.0))
-                if cv2.matchShapes(contour, contour_ref, 1, 0.0) > 0.2: # Filter absurd shapes
+                if cv2.matchShapes(contour, contour_ref, 1, 0.0) > 0.3: # Filter absurd shapes
                     continue
                 rect = cv2.minAreaRect(contour)
                 (center_y, center_x) = rect[0]

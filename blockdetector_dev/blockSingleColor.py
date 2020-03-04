@@ -35,14 +35,13 @@ def blockDetector(hsvImg):
 	whiteBoard = np.zeros([m, n, 3], dtype=np.uint8)
 	whiteBoard[:, :] = np.array([0, 0, 100], dtype=np.uint8)
 
-	#cv2.namedWindow("cut_window",cv2.WINDOW_AUTOSIZE)
-	#cv2.imshow('cut_window', hsvImg)
-	#cv2.waitKey()
+	# cv2.namedWindow("cut_window",cv2.WINDOW_AUTOSIZE)
+	# cv2.imshow('cut_window', hsvImg)
+	# cv2.waitKey()
 
 	# Define color constants
-	yellow_lo = np.array([0, 0, 0])
-	yellow_hi = np.array([180, 180, 40])
-
+	yellow_lo = np.array([130, 60, 40])
+	yellow_hi = np.array([160, 200, 120])
 	red2_lo = np.array([160, 140, 80])
 	red2_hi = np.array([180, 255, 120])
 
@@ -60,6 +59,7 @@ def blockDetector(hsvImg):
 		inRangeMask2 = cv2.morphologyEx(inRangeMask2, cv2.MORPH_OPEN, kernel)
 		hsvImg_singleColor2 = cv2.bitwise_and(hsvImg, hsvImg, mask=inRangeMask2)
 		hsvImg_singleColor = cv2.bitwise_or(hsvImg_singleColor, hsvImg_singleColor2)
+		inRangeMask = cv2.bitwise_or(inRangeMask, inRangeMask2)
 
 	contours, hierarchy = cv2.findContours(inRangeMask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
@@ -72,7 +72,7 @@ def blockDetector(hsvImg):
 		if (area < 1400 or area > 2600):  # Filter too small ones
 			continue
 		print(cv2.matchShapes(contour, contour_ref, 1, 0.0))
-		if (cv2.matchShapes(contour, contour_ref, 1, 0.0) > 0.2):
+		if (cv2.matchShapes(contour, contour_ref, 1, 0.0) > 0.3):
 			continue
 		(center_y, center_x) = rect[0]
 		(width, height) = rect[1]
