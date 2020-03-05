@@ -90,6 +90,7 @@ def get_euler_angles_from_T(T):
     @return     The euler angles from T.
     """
     #ZYZ parameterization
+    print(f"{T}")
     euler = np.zeros([3,1])
     euler[1] = np.arctan2(np.sqrt(T[2,0]**2 + T[2,1]**2) , T[2,2])
     euler[0] = np.arctan2(T[1,2] / np.sin(euler[1]) , T[0,2] / np.sin(euler[1]))
@@ -109,7 +110,7 @@ def get_pose_from_T(T):
     """
     pose = np.zeros([4,1])
     euler = get_euler_angles_from_T(T)
-    pose = [T[0,3], T[1,3], T[2,3], euler[1]]
+    pose = [T[0,3], T[1,3], T[2,3], euler[2]]
     return pose
 
 
@@ -164,7 +165,7 @@ def IK_geometric(dh_params, pose):
     l1 = dh_params[0][2]
     l2 = dh_params[2][0]
     l3 = dh_params[3][0]
-    # l4 = #TODO: Measure L4
+    l4 = 0.11
 
     #Inverse kinematics - Has 4 possible ways of reaching a particular point
     """Forward"""
