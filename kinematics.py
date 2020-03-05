@@ -50,9 +50,13 @@ def FK_dh(dh_params, joint_angles, link):
     #     H = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3]) @ H
     #     # print(H)
     for i in range(link):
+        joint_angle = joint_angles[i] * np.pi / 180
         dh_params[i][3] = dh_params[i][3] + joint_angles[i]
-        H = H @ get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3])
-        # print(H)
+        clamp(dh_params[i][3])
+        T_curr = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3])
+        H = H @ T_curr
+        # print(f"link {i+1}: {T_curr}")
+        # print(f"{i}: {dh_params[i]}")
     return H
 
 def get_transform_from_dh(a, alpha, d, theta):
@@ -68,7 +72,6 @@ def get_transform_from_dh(a, alpha, d, theta):
 
     @return     The 4x4 transform matrix.
     """
-
     T = np.zeros([4,4])
     T[0,:] = [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)]
     T[1,:] = [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)]

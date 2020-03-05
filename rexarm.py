@@ -690,7 +690,7 @@ class Rexarm():
         """
         dh_params = self.get_dh_parameters()
         joint_angles = self.get_positions()
-        wrist_pose = get_pose_from_T(FK_dh(deepcopy(dh_params), joint_angles, 3))
+        wrist_pose = get_pose_from_T(FK_dh(deepcopy(dh_params), joint_angles, 4))
         # TODO: Check if wrist link is 3
         return wrist_pose
 

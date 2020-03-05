@@ -14,7 +14,7 @@ from copy import deepcopy
 passed = True
 vclamp = np.vectorize(clamp)
 
-dh_params = [[0, 0, 0.040, 0],
+dh_params = [[0, 0, 0.1200, 0],
              [0, 1.57, 0, 0],
              [0.138, 0, 0, -1.57],
              [0.09866, 0, 0, 0]]
@@ -42,18 +42,18 @@ for joint_angles in fk_angles:
             fk_poses.append(pose)
     print()
 
-##print('Test IK')
-##for pose, angles in zip(fk_poses, fk_angles):
-##    matching_angles = False
-##    print('Pose: {}'.format(pose))
-##    options = IK_geometric(deepcopy(dh_params), pose)
-##    for i, joint_angles in enumerate(options):
-##        print('Option {}: {}'.format(i, joint_angles))
-##        compare = vclamp(joint_angles - angles)
-##        if np.allclose(compare, np.zeros_like(compare), rtol=1e-3, atol=1e-4):
-##            print('Option {} matches angles used in FK'.format(i))
-##            matching_angles = True
-##    if not matching_angles:
-##        print('No match to the FK angles found!')
-##        passed = False
-##    print()
+print('Test IK')
+for pose, angles in zip(fk_poses, fk_angles):
+   matching_angles = False
+   print('Pose: {}'.format(pose))
+   options = IK_geometric(deepcopy(dh_params), pose)
+   for i, joint_angles in enumerate(options):
+       print('Option {}: {}'.format(i, joint_angles))
+       compare = vclamp(joint_angles - angles)
+       if np.allclose(compare, np.zeros_like(compare), rtol=1e-3, atol=1e-4):
+           print('Option {} matches angles used in FK'.format(i))
+           matching_angles = True
+   if not matching_angles:
+       print('No match to the FK angles found!')
+       passed = False
+   print()
