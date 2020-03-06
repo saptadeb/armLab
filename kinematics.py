@@ -90,11 +90,19 @@ def get_euler_angles_from_T(T):
     @return     The euler angles from T.
     """
     #ZYZ parameterization
-    print(f"{T}")
+    # print(f"{T}")
+    r33 = T[2,2]
+    r13 = T[0,2]
+    r23 = T[1,2]
+    r32 = T[2,1]
+    r31 = T[2,0]
     euler = np.zeros([3,1])
-    euler[1] = np.arctan2(np.sqrt(T[2,0]**2 + T[2,1]**2) , T[2,2])
-    euler[0] = np.arctan2(T[1,2] / np.sin(euler[1]) , T[0,2] / np.sin(euler[1]))
-    euler[2] = np.arctan2(T[2,1] / np.sin(euler[1]) , T[2,0] / np.sin(euler[1]))
+    # euler[1] = np.arctan2(np.sqrt(T[2,0]**2 + T[2,1]**2) , T[2,2])
+    # euler[0] = np.arctan2(T[1,2] / np.sin(euler[1]) , T[0,2] / np.sin(euler[1]))
+    # euler[2] = np.arctan2(T[2,1] / np.sin(euler[1]) , T[2,0] / np.sin(euler[1]))
+    euler[1] = np.arctan2(np.sqrt(1 - r33**2) , r33) #theta
+    euler[0] = np.arctan2(r23, r13) #phi
+    euler[2] = np.arctan2(r32, -r31) #psi
     return euler
 
 def get_pose_from_T(T):
