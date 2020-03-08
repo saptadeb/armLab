@@ -3,4 +3,6 @@ str,str,int,float,float,bool,float,float,float,float
 base,MX,1,-180,180,False,0,1.57,0.12,1.57
 shoulder,MX,2,-129,128,False,0.102,0,0,1.19
 elbow,MX,3,-89,120,False,0.1,0,0,-1.19
-wrist,AX,4,-127,125,False,0.11,0,0,0
+wrist,AX,4,-127,125,False,0,1.57,0,1.57
+wrist_roll,XL,6,-127,125,False,0,0,0.11,0
+tool,XL,5,-5,5,True,0,0,0,0
