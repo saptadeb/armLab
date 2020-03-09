@@ -166,7 +166,7 @@ def IK_geometric(dh_params, pose):
     phi = pose[3]
     theta = pose[4]
     psi = pose[5]
-
+    theta5 = clamp(psi + np.pi)
     tool_angle = np.pi / 2 - theta #Different than theta4
     #Constants
     l1 = dh_params[0][2]
@@ -177,51 +177,46 @@ def IK_geometric(dh_params, pose):
     #Inverse kinematics - Has 4 possible ways of reaching a particular point
     """Forward"""
     theta1_fwd  = np.arctan2(y,x)
-    a1 = x - l4*np.cos(theta1_fwd)*np.cos(tool_angle)
-    b1 = y - l4*np.sin(theta1_fwd)*np.cos(tool_angle)
+    a1 = x - np.sign(x)* abs(l4*np.cos(theta1_fwd)*np.cos(tool_angle))
+    b1 = y - np.sign(y)* abs(l4*np.sin(theta1_fwd)*np.cos(tool_angle))
     r           = np.sqrt(a1**2 + b1**2)
     zeff        = z - l1 - l4*np.sin(tool_angle)
     A           = np.sqrt(zeff**2 + r**2)
     # print(f"{theta1_fwd}, {zeff}, {A}, {l2}, {l3}")
-    theta3_fwd  = np.arccos((A**2 - l2**2 - l3**2)/(2*l2*l3))
-    a           = l3*np.sin(theta3_fwd)
-    b           = l2 + l3*np.cos(theta3_fwd)
-    theta3_fwd  = (np.pi / 2) - (theta3_fwd + 0.38)
-    theta2_fwd_down    = np.arctan2(zeff, -r) + np.arctan2(a,b)
-    theta2_fwd_down = (np.pi / 2) - (theta2_fwd_down - 0.38)
-    theta2_fwd_up    = np.arctan2(zeff,-r) - np.arctan2(a,b)
-    theta2_fwd_up = (np.pi / 2) - (theta2_fwd_up - 0.38)
-    theta4_fwd_down    = tool_angle - (theta2_fwd_down + theta3_fwd)
-    theta4_fwd_up    = tool_angle - (theta2_fwd_up + theta3_fwd)
+    theta3_temp  = np.arccos((A**2 - l2**2 - l3**2)/(2*l2*l3))
+    a           = l3*np.sin(theta3_temp)
+    b           = l2 + l3*np.cos(theta3_temp)
+
+    theta3_1  = np.pi/2 - 0.38 - theta3_temp
+    theta3_2  = np.pi/2 - 0.38 + theta3_temp
+
+    theta2_fwd_down    = np.arctan2(zeff, r) - np.arctan2(a,b) + 0.38 - np.pi/2
+    theta2_fwd_up    = np.arctan2(zeff,r) + np.arctan2(a,b) + 0.38 - np.pi/2
+    theta4_fwd_down    = tool_angle - (theta2_fwd_down + theta3_2)
+    theta4_fwd_up    = tool_angle - (theta2_fwd_up + theta3_1)
 
     """Backward"""
     theta1_bkwd  = np.pi + np.arctan2(y,x)
-    a1 = x - l4*np.cos(theta1_fwd)*np.cos(tool_angle)
-    b1 = y - l4*np.sin(theta1_fwd)*np.cos(tool_angle)
+    a1 = x - np.sign(x)* abs(l4*np.cos(theta1_bkwd)*np.cos(tool_angle))
+    b1 = y - np.sign(y)* abs(l4*np.sin(theta1_bkwd)*np.cos(tool_angle))
     r           = np.sqrt(a1**2 + b1**2)
     zeff        = z - l1 - l4*np.sin(tool_angle)
     A           = np.sqrt(zeff**2 + r**2)
-    print(f"theta1_bkwd:{theta1_bkwd}\na1:{a1}\nb1:{b1}\nr:{r}\nzeff:{zeff}\nA:{A}")
-    theta3_bkwd  = np.arccos((A**2 - l2**2 - l3**2)/(2*l2*l3))
-    a           = l3*np.sin(theta3_bkwd)
-    b           = l2 + l3*np.cos(theta3_bkwd)
-    theta3_bkwd  = (np.pi / 2) - (theta3_bkwd + 0.38)
-    print(f"{(A**2 - l2**2 - l3**2)/(2*l2*l3)}")
+    # print(f"theta1_bkwd:{theta1_bkwd}\na1:{a1}\nb1:{b1}\nr:{r}\nzeff:{zeff}\nA:{A}")
+    a           = l3*np.sin(theta3_temp)
+    b           = l2 + l3*np.cos(theta3_temp)
+    # print(f"{(A**2 - l2**2 - l3**2)/(2*l2*l3)}")
 
-    theta2_bkwd_up    = np.arctan2(zeff, r) + np.arctan2(a,b)
-    theta2_bkwd_up =   (np.pi/2) - (theta2_bkwd_up - 0.38)
-    theta2_bkwd_down    = np.arctan2(zeff,-r) - np.arctan2(a,b)
-    theta2_bkwd_down = (np.pi / 2) - (theta2_bkwd_down - 0.38)
-    theta4_bkwd_up    = tool_angle - (theta2_bkwd_up + theta3_bkwd)
-    theta4_bkwd_down    = tool_angle - (theta2_bkwd_down + theta3_bkwd)
-    # theta4_bkwd_up    = phi - 1.57
-    # theta4_bkwd_down    = phi - 1.57
+    theta2_bkwd_up    = np.pi/2 - (np.arctan2(zeff, r) + np.arctan2(a,b)) + 0.38
+    theta2_bkwd_down    = np.pi/2 + 0.38 - (np.arctan2(zeff,r) - np.arctan2(a,b))
+    theta4_bkwd_up    = tool_angle - (theta2_bkwd_up + theta3_2) + np.pi
+    theta4_bkwd_down    = tool_angle - (theta2_bkwd_down + theta3_1) + np.pi
 
     """Pack all 4 possible answers into a numpy matrix"""
     joints = np.zeros((4,5))
-    joints[0,:] = [theta1_fwd, theta2_fwd_down, theta3_fwd, theta4_fwd_down, 0]
-    joints[1,:] = [theta1_fwd, theta2_fwd_up, theta3_fwd, theta4_fwd_up, 0]
-    joints[2,:] = [theta1_bkwd, theta2_bkwd_up, theta3_bkwd, theta4_bkwd_up, 0]
-    joints[3,:] = [theta1_bkwd, theta2_bkwd_down, theta3_bkwd, theta4_bkwd_down, 0]
+    joints[0,:] = [theta1_fwd, theta2_fwd_down, theta3_2, theta4_fwd_down, theta5] #fwd_down
+    joints[1,:] = [theta1_fwd, theta2_fwd_up, theta3_1, theta4_fwd_up, theta5] #fwd_up
+    joints[2,:] = [theta1_bkwd, theta2_bkwd_down, theta3_1, theta4_bkwd_down, theta5] #bkwd_down
+    joints[3,:] = [theta1_bkwd, theta2_bkwd_up, theta3_2, theta4_bkwd_up, theta5] #bkwd_up
 
     return joints
