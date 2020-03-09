@@ -194,6 +194,8 @@ class Gui(QMainWindow):
         self.ui.btnUser5.clicked.connect(self.toggle_logging)
         self.ui.btnUser1.clicked.connect(self.calibrate)
         self.ui.btnUser6.clicked.connect(self.blockDetect)
+        self.ui.btnUser7.clicked.connect(self.openGripper)
+        self.ui.btnUser8.clicked.connect(self.closeGripper)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -255,8 +257,8 @@ class Gui(QMainWindow):
         self.ui.rdoutY.setText(str("%+.2f" % (pos[1])))
         self.ui.rdoutZ.setText(str("%+.2f" % (pos[2])))
         self.ui.rdoutT.setText(str("%+.2f" % (pos[3])))
-        # self.ui.rdoutG.setText(str("%+.2f" % (pos[4])))
-        # self.ui.rdoutP.setText(str("%+.2f" % (pos[5])))
+        self.ui.rdoutG.setText(str("%+.2f" % (pos[4])))
+        self.ui.rdoutP.setText(str("%+.2f" % (pos[5])))
 
     @pyqtSlot(list)
     def updateJointErrors(self, errors):
@@ -290,6 +292,12 @@ class Gui(QMainWindow):
 
     def blockDetect(self):
         self.kinect.blockDetector()
+
+    def openGripper(self):
+        self.rexarm.open_gripper()
+
+    def closeGripper(self):
+        self.rexarm.close_gripper()
 
     def toggle_logging(self):
         if not self.sm.is_logging:

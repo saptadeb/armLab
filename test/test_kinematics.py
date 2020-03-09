@@ -14,10 +14,11 @@ from copy import deepcopy
 passed = True
 vclamp = np.vectorize(clamp)
 
-dh_params = [[0,1.57,0.12,1.57],
+dh_params = [[0,1.57,0.12,0.0],
              [0.102,0,0,1.19],
              [0.1,0,0,-1.19],
-             [0.11,0,0,0]]
+             [0,1.57,0,1.57],
+             [0,0,0.11,0]]
 
 # fk_angles = [
 #     [0.0,           0.0,            0.0,            0.0],
@@ -31,7 +32,7 @@ dh_params = [[0,1.57,0.12,1.57],
 #     [0.0,           np.pi / 2,      np.pi / 2,      0.0],
 #     [np.pi / 2,     -np.pi / 2,     np.pi / 2,      0.0]]
 
-fk_angles = [[0, 0.0,            0.0,            0.75]]
+fk_angles = [[0, 0.0,            0.0,            0.0]]
 
 print('Test FK')
 fk_poses = []

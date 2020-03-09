@@ -44,7 +44,7 @@ def FK_dh(dh_params, joint_angles, link):
     """
     H = np.eye(4)
     for i in range(link):
-        joint_angle = joint_angles[i] * np.pi / 180
+        #First convert incoming joint angles to radians
         dh_params[i][3] = dh_params[i][3] + joint_angles[i]
         clamp(dh_params[i][3])
         T_curr = get_transform_from_dh(dh_params[i][0], dh_params[i][1], dh_params[i][2], dh_params[i][3])
@@ -96,7 +96,8 @@ def get_euler_angles_from_T(T):
     # euler[2] = np.arctan2(T[2,1] / np.sin(euler[1]) , T[2,0] / np.sin(euler[1]))
     euler[1] = np.arctan2(np.sqrt(1 - r33**2) , r33) #theta
     euler[0] = np.arctan2(r23, r13) #phi
-    euler[2] = np.arctan2(r32, -r31) #psi
+    euler[2] = np.arctan2(r32, -r31)
+    # euler[2] = clamp(np.arctan2(r32, -r31) + np.pi) #psi
     return euler
 
 def get_pose_from_T(T):
@@ -110,10 +111,10 @@ def get_pose_from_T(T):
 
     @return     The pose from T.
     """
-    pose = np.zeros([4,1])
+    pose = np.zeros([6,1])
     euler = get_euler_angles_from_T(T)
-    pose = [T[0,3], T[1,3], T[2,3], euler[2]]
-    print(euler)
+    pose = [T[0,3], T[1,3], T[2,3], euler[0], euler[1], euler[2]]
+    # print(f"phi:{euler[0]}\ntheta:{euler[1]}\npsi:{euler[2]}")
     return pose
 
 
@@ -184,16 +185,16 @@ def IK_geometric(dh_params, pose):
     # theta2_fwd_down    = np.arctan2(c,-np.sqrt(r**2 - c**2)) - np.arctan2(a,b)
     # theta4_fwd_up    = phi - (theta2_fwd_up + theta3_fwd)
     # theta4_fwd_down    = phi - (theta2_fwd_down + theta3_fwd)
-    theta1_fwd  = np.arctan2(y,x) - np.pi / 2
+    theta1_fwd  = np.arctan2(y,x)
     r           = np.sqrt(x**2 + y**2)
     zeff        = z - l1
     A           = np.sqrt(zeff**2 + x**2 + y**2)
-    print(f"{theta1_fwd}, {zeff}, {A}, {l2}, {l3}")
+    # print(f"{theta1_fwd}, {zeff}, {A}, {l2}, {l3}")
     theta3_fwd  = np.arccos((A**2 - l2**2 - l3**2)/(2*l2*l3))
     a           = l3*np.sin(theta3_fwd)
     b           = l2 + l3*np.cos(theta3_fwd)
     theta3_fwd  = (np.pi / 2) - (theta3_fwd + 0.38)
-    print(f"{(A**2 - l2**2 - l3**2)/(2*l2*l3)}")
+    # print(f"{(A**2 - l2**2 - l3**2)/(2*l2*l3)}")
     theta2_fwd_up    = np.arctan2(zeff, r) - np.arctan2(a,b)
     theta2_fwd_up = (np.pi / 2) - (theta2_fwd_up - 0.38)
     theta2_fwd_down    = np.arctan2(zeff,-r) - np.arctan2(a,b)

@@ -56,7 +56,8 @@ class Kinect():
         self.cameraCalibrated = False
         """ block info """
         self.block_contours = np.array([])
-        self.block_detections = np.array([])
+        # self.block_detections = np.array([])
+        self.block_detections = []
 
     def toggleExposure(self, state):
         """!
@@ -183,22 +184,22 @@ class Kinect():
 
         if K == 2:
             A = np.zeros([2 * N, 2 * (K + 1)])
-        
+
             # Build matrix A from pixels
             for i in range(N):
-                A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
+                A[2 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32)
                 A[2 * i     , K    ] = 1
-                A[2 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32) 
+                A[2 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32)
                 A[2 * i + 1 , 2 * K + 1   ] = 1
             # print(A)
             # Build b vector
             b = np.zeros([2 * N])
             for i in range(N):
-                b[2 * i : 2 * i + 2] = coord2[i, 0 : K].astype(np.float32) 
+                b[2 * i : 2 * i + 2] = coord2[i, 0 : K].astype(np.float32)
             # print(b)
             # Compute solution using peseudo inverse
             x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
-            # print(x)     
+            # print(x)
             transformMatrixTop = np.reshape(x, [2, 3])
             transformMatrixBtm = np.array([0, 0, 1])
             result = np.vstack((transformMatrixTop, transformMatrixBtm))
@@ -206,25 +207,25 @@ class Kinect():
             return result
         else:
             A = np.zeros([3 * N, 3 * (K + 1)])
-        
+
             # Build matrix A from pixels
             for i in range(N):
-                A[3 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i     , 0 : K] = coord1[i, 0 : K].astype(np.float32)
                 A[3 * i     , K    ] = 1
-                A[3 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i + 1 , K + 1 : 2 * K + 1] = coord1[i, 0 : K].astype(np.float32)
                 A[3 * i + 1 , 2 * K + 1   ] = 1
-                A[3 * i + 2 , 2 * K + 2 : 3 * K + 2] = coord1[i, 0 : K].astype(np.float32) 
+                A[3 * i + 2 , 2 * K + 2 : 3 * K + 2] = coord1[i, 0 : K].astype(np.float32)
                 A[3 * i + 2 , 3 * K + 2   ] = 1
             # Build b vector
             b = np.zeros([3 * N])
             for i in range(N):
-                b[3 * i : 3 * i + 3] = coord2[i, 0 : K].astype(np.float32) 
+                b[3 * i : 3 * i + 3] = coord2[i, 0 : K].astype(np.float32)
             # print(A)
             # print(b)
             # Compute solution using peseudo inverse
             # print(A.transpose().dot(A))
             x = (np.linalg.inv(A.transpose().dot(A))).dot(A.transpose()).dot(b)
-            # print(x)     
+            # print(x)
             transformMatrixTop = np.reshape(x, [3, 4])
             transformMatrixBtm = np.array([0, 0, 0, 1])
             result = np.vstack((transformMatrixTop, transformMatrixBtm))
@@ -360,11 +361,15 @@ class Kinect():
                 coutour_orientation = rect[2]
                 block_detections.append([int(center_x), int(center_y), width, height, area, coutour_orientation, k]) # TODO Format
                 allContours.append(contour)
+                worldCoord3 = self.getWorldCoord(np.array([int(center_x / 2.1333), int(center_y / 2)]))
+                worldCoord3[2] -= 0.02
+                self.block_detections.append([worldCoord3[0], worldCoord3[1], worldCoord3[2], coutour_orientation])
 
                 print(colors[k] + " @ " + str(np.array([int(center_x / 2.1333), int(center_y / 2)])))
                 print(colors[k] + " @ " + str(self.getWorldCoord(np.array([int(center_x / 2.1333), int(center_y / 2)]))))
 
         self.block_contours = allContours
+        print(self.block_detections)
 
     def detectBlocksInDepthImage(self):
         """!
@@ -388,7 +393,7 @@ class Kinect():
         camerFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
         return camerFrameCoord3
 
-    def getWorldCoord(self, rgbPixel2): 
+    def getWorldCoord(self, rgbPixel2):
         # Way 1
         # # This is used after calibration is done
         # # Assert rgbPixel only has 2 values
@@ -429,7 +434,7 @@ class Kinect():
         cameraFrameCoord3 = z_c * np.linalg.inv(self.cameraIntrinsicMatrix).dot(rgbPixel3)
         cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
 
-        
+
         # _,extrinsicAffine3,_ = cv2.estimateAffine3D(self.cameraFramePoints, worldCoords)
         worldFrameCoord3 = self.camera2world_affine3.dot(cameraFrameCoord4)
         # cameraFrameCoord4 = np.array([cameraFrameCoord3[0], cameraFrameCoord3[1], cameraFrameCoord3[2], 1])
@@ -450,4 +455,3 @@ class Kinect():
         # print(self.cameraExtrinsic4)
 
         self.camera2world_affine3= self.getAffineTransform(self.cameraFramePoints, worldRefPoints)[0:3, :]
-
