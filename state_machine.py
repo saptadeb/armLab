@@ -5,6 +5,13 @@ The state machine that implements the logic.
 import time
 import numpy as np
 from numpy import genfromtxt
+from kinematics import *
+from copy import deepcopy
+dh_params = [[0,1.57,0.12,0.0],
+             [0.102,0,0,1.19],
+             [0.1,0,0,-1.19],
+             [0,1.57,0,1.57],
+             [0,0,0.11,0]]
 
 class StateMachine():
     """!
@@ -83,6 +90,9 @@ class StateMachine():
 
         if self.next_state == "playback":
             self.playback()
+
+        if self.next_state == "clickGrab":
+            self.clickGrab()
 
 
 
@@ -280,6 +290,17 @@ class StateMachine():
 
         self.status_message = "Calibration - Completed Calibration"
         time.sleep(1)
+
+    def clickGrab(self):
+        self.current_state = "clickGrab"
+        if self.kinect.new_click == True:
+            pt = self.kinect.worldCoords
+            clickedPos = np.array([pt[1],-pt[0], pt[2]+0.06])
+            pose = [clickedPos[0], clickedPos[1], clickedPos[2], 0, np.pi, 0]
+            angles = IK_geometric(deepcopy(dh_params), pose)
+            self.rexarm.set_positions(angles[1][0:3])
+            print(clickedPos)
+            self.kinect.new_click = False
 
     def initialize_rexarm(self):
         """!

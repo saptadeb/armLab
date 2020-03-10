@@ -196,6 +196,7 @@ class Gui(QMainWindow):
         self.ui.btnUser6.clicked.connect(self.blockDetect)
         self.ui.btnUser7.clicked.connect(self.openGripper)
         self.ui.btnUser8.clicked.connect(self.closeGripper)
+        self.ui.btnUser9.clicked.connect(self.clickGrab)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -299,6 +300,9 @@ class Gui(QMainWindow):
     def closeGripper(self):
         self.rexarm.close_gripper()
 
+    def clickGrab(self):
+        self.sm.set_next_state("clickGrab")
+
     def toggle_logging(self):
         if not self.sm.is_logging:
             # with open('log_data.csv', 'a') as log_file:
@@ -375,6 +379,7 @@ class Gui(QMainWindow):
             pixel = np.array([mouse_event.y(), mouse_event.x()])
             # cameraCoord = self.kinect.pixel2Camera(pixel)
             worldCoord = self.kinect.getWorldCoord(pixel)
+            self.kinect.worldCoords = worldCoord
             # print(worldCoord)
             self.ui.rdoutMousePixels.setText(np.array2string(pixel))
             # self.ui.rdoutMouseWorld.setText(np.array2string((worldCoord * 100).astype(int)))

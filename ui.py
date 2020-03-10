@@ -798,7 +798,7 @@ class Ui_MainWindow(object):
         self.btnUser6.setText(_translate("MainWindow", "Block Detect", None))
         self.btnUser7.setText(_translate("MainWindow", "Open Gripper", None))
         self.btnUser8.setText(_translate("MainWindow", "Close Gripper", None))
-        self.btnUser9.setText(_translate("MainWindow", "USER 9", None))
+        self.btnUser9.setText(_translate("MainWindow", "Click_to_grab", None))
         self.btnUser10.setText(_translate("MainWindow", "USER 10", None))
         self.btnUser11.setText(_translate("MainWindow", "USER 11", None))
         self.btnUser12.setText(_translate("MainWindow", "USER 12", None))

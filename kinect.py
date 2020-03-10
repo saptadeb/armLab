@@ -58,6 +58,7 @@ class Kinect():
         self.block_contours = np.array([])
         # self.block_detections = np.array([])
         self.block_detections = []
+        self.worldCoords = None
 
     def toggleExposure(self, state):
         """!
