@@ -458,6 +458,7 @@ class Rexarm():
         joint_angles = self.get_positions()
         joint_angles[5] = -49
         self.set_positions(joint_angles)
+        # print(f"len(self._joints):{self.num_joints}")
         pass
 
     @_ensure_initialized

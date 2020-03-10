@@ -295,11 +295,14 @@ class StateMachine():
         self.current_state = "clickGrab"
         if self.kinect.new_click == True:
             pt = self.kinect.worldCoords
-            clickedPos = np.array([pt[1],-pt[0], pt[2]+0.06])
-            pose = [clickedPos[0], clickedPos[1], clickedPos[2], 0, np.pi, 0]
+            # 140 mm added in the z to account for vertical approach and
+            # negative 90 deg added to get wrist as vertical
+            clickedPos = np.array([pt[1],-pt[0], pt[2]+0.14])
+            pose = [clickedPos[0], clickedPos[1], clickedPos[2], 0, np.pi/2, np.pi]
             angles = IK_geometric(deepcopy(dh_params), pose)
-            self.rexarm.set_positions(angles[1][0:3])
-            print(clickedPos)
+            reqAngles = np.array([angles[1][0],angles[1][1],angles[1][2],angles[1][3]-np.pi/2,0,0])
+            print(reqAngles)
+            self.rexarm.set_positions(reqAngles)
             self.kinect.new_click = False
 
     def initialize_rexarm(self):
