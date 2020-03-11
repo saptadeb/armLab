@@ -297,26 +297,30 @@ class Kinect():
         whiteBoard = np.zeros([m, n, 3], dtype=np.uint8)
         whiteBoard[:, :] = np.array([0, 0, 100], dtype=np.uint8)
 
+        # Mask the center region
+        centerPoints = np.array([[660, 560], [560, 560], [560, 650], [660, 650]])
+        hsvImg[centerPoints[1, 0]: centerPoints[0, 0], centerPoints[0, 1]: centerPoints[2, 1]] = np.array([0, 0, 100])
+
         # Define color constants
         colors = ["yellow", "orange", "pink", "black", "red", "purple", "green", "blue"]
         yellow_lo = np.array([23, 180, 150])
         yellow_hi = np.array([35, 255, 255])
         orange_lo = np.array([3, 190, 110])
         orange_hi = np.array([9, 255, 170])
-        pink_lo = np.array([165, 190, 120])
-        pink_hi = np.array([178, 235, 180])
+        pink_lo = np.array([165, 120, 130]) #np.array([165, 120, 130])
+        pink_hi = np.array([178, 255, 200]) #np.array([178, 255, 180])
         black_lo = np.array([0, 0, 0])
         black_hi = np.array([180, 180, 40])
         red_lo = np.array([0, 190, 80]) # Red is special
         red_hi = np.array([10, 255, 120])
         red2_lo = np.array([160, 140, 80])
         red2_hi = np.array([180, 255, 120])
-        purple_lo = np.array([130, 60, 40])
-        purple_hi = np.array([160, 200, 120])
+        purple_lo = np.array([130, 120, 40])
+        purple_hi = np.array([160, 255, 120])
         green_lo = np.array([40, 0, 50])
         green_hi = np.array([70, 255, 120])
-        blue_lo = np.array([110, 90, 80])
-        blue_hi = np.array([120, 255, 120])
+        blue_lo = np.array([110, 60, 60])
+        blue_hi = np.array([140, 255, 150])
 
         # colorRangesLo = [yellow_lo, orange_lo, pink_lo, black_lo, red_lo, purple_lo, green_lo, blue_lo]
         # colorRangesHi = [yellow_hi, orange_hi, pink_hi, black_hi, red_hi, purple_hi, green_hi, blue_hi]

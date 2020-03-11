@@ -32,16 +32,21 @@ def blockDetector(hsvImg):
 	hsvImg[:, ctp6 : n] = np.array([0, 0, 100])
 	hsvImg[0 : ctp3, ctp4 : ctp6] = np.array([0, 0, 100])
 	hsvImg[ctp1 : m, ctp2 : ctp6] = np.array([0, 0, 100])
-	whiteBoard = np.zeros([m, n, 3], dtype=np.uint8)
-	whiteBoard[:, :] = np.array([0, 0, 100], dtype=np.uint8)
+	# whiteBoard = np.zeros([m, n, 3], dtype=np.uint8)
+	# whiteBoard[:, :] = np.array([0, 0, 100], dtype=np.uint8)
+
+	# Mask the center region
+	centerPoints = np.array([[660, 560], [560, 560], [560, 650], [660, 650]])
+	hsvImg[centerPoints[1, 0] : centerPoints[0, 0], centerPoints[0, 1] : centerPoints[2, 1]] = np.array([0, 0, 100])
 
 	# cv2.namedWindow("cut_window",cv2.WINDOW_AUTOSIZE)
 	# cv2.imshow('cut_window', hsvImg)
 	# cv2.waitKey()
 
 	# Define color constants
-	yellow_lo = np.array([130, 60, 40])
-	yellow_hi = np.array([160, 200, 120])
+	yellow_lo = np.array([130, 120, 40])
+	yellow_hi = np.array([160, 255, 120])
+
 	red2_lo = np.array([160, 140, 80])
 	red2_hi = np.array([180, 255, 120])
 

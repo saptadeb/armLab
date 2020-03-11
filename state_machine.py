@@ -254,8 +254,25 @@ class StateMachine():
         # print(self.kinect.rgb_click_points)
         # print(self.kinect.depth_click_points)
 
-        self.kinect.rgb_click_points = np.array([[135, 405], [136,  91], [469,  91], [473, 404], [302, 233]])
-        self.kinect.depth_click_points = np.array([[158, 411], [155,  49], [516,  47], [527, 409], [336, 196]])
+        self.kinect.rgb_click_points = np.array([[138, 405], [138,  92], [472,  90], [475, 404], [304, 243]])
+        self.kinect.depth_click_points = np.array([[158, 412], [156,  49], [519,  48], [528, 410], [340, 221]])
+        """
+        [[138 404]
+ [138  94]
+ [470  89]
+ [473 401]
+ [304 253]]
+[[158 411]
+ [155  49]
+ [518  48]
+ [523 410]
+ [338 237]]
+[[ 0.18348274 -0.24802349  0.92911304]
+ [-0.37096088 -0.25140579  0.94178337]
+ [-0.38413287  0.35003765  0.95216683]
+ [ 0.17864623  0.34782623  0.93162023]
+ [-0.07310551  0.04062922  0.80713093]]
+"""
         """TODO Perform camera calibration here"""
         # print(self.kinect.rgb_click_points)
         # Use mouse clicks to get pixel locations of known locations in the workspace
@@ -299,11 +316,11 @@ class StateMachine():
             # negative 90 deg added to get wrist as vertical
             clickedPos = np.array([pt[1],-pt[0], pt[2]])
             if self.rexarm.gripper_state:
-                offset_z =  0.038 + 0.015
+                offset_z =  0.020 + 0.025
             else:
-                offset_z = 0.015
-            pose1 = [clickedPos[0], clickedPos[1], clickedPos[2]+0.1, 0, np.pi - 0.05, np.pi]
-            pose2 = [clickedPos[0], clickedPos[1], clickedPos[2]+offset_z, 0, np.pi - 0.05, np.pi]
+                offset_z = 0.025
+            pose1 = [clickedPos[0], clickedPos[1], clickedPos[2]+0.1, 0, np.pi - 0.1, np.pi]
+            pose2 = [clickedPos[0], clickedPos[1], clickedPos[2]+offset_z, 0, np.pi - 0.1, np.pi]
             angles1 = IK_geometric(deepcopy(dh_params), pose1)
             angles2 = IK_geometric(deepcopy(dh_params), pose2)
             # print(gripper_angle)
