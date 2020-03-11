@@ -233,29 +233,29 @@ class StateMachine():
                             "upper right corner of board",
                             "lower right corner of board",
                             "center of shoulder motor"]
-        i = 0
-        for j in range(5):
-            self.status_message = "Calibration - Click %s in RGB image" % location_strings[j]
-            while (i <= j):
-                if(self.kinect.new_click == True):
-                    self.kinect.rgb_click_points[i] = self.kinect.last_click.copy()
-                    i = i + 1
-                    self.kinect.new_click = False
-
-        i = 0
-        for j in range(5):
-            self.status_message = "Calibration - Click %s in depth image" % location_strings[j]
-            while (i <= j):
-                if(self.kinect.new_click == True):
-                    self.kinect.depth_click_points[i] = self.kinect.last_click.copy()
-                    i = i + 1
-                    self.kinect.new_click = False
-
+        # i = 0
+        # for j in range(5):
+        #     self.status_message = "Calibration - Click %s in RGB image" % location_strings[j]
+        #     while (i <= j):
+        #         if(self.kinect.new_click == True):
+        #             self.kinect.rgb_click_points[i] = self.kinect.last_click.copy()
+        #             i = i + 1
+        #             self.kinect.new_click = False
+        #
+        # i = 0
+        # for j in range(5):
+        #     self.status_message = "Calibration - Click %s in depth image" % location_strings[j]
+        #     while (i <= j):
+        #         if(self.kinect.new_click == True):
+        #             self.kinect.depth_click_points[i] = self.kinect.last_click.copy()
+        #             i = i + 1
+        #             self.kinect.new_click = False
+        #
         # print(self.kinect.rgb_click_points)
         # print(self.kinect.depth_click_points)
 
-        # self.kinect.rgb_click_points = np.array([[139, 407], [151,  86], [494 , 97], [486, 420], [320, 247]])
-        # self.kinect.depth_click_points = np.array([[164, 410], [175 , 41], [541 , 54], [540, 425], [360 ,227]])
+        self.kinect.rgb_click_points = np.array([[135, 405], [136,  91], [469,  91], [473, 404], [302, 233]])
+        self.kinect.depth_click_points = np.array([[158, 411], [155,  49], [516,  47], [527, 409], [336, 196]])
         """TODO Perform camera calibration here"""
         # print(self.kinect.rgb_click_points)
         # Use mouse clicks to get pixel locations of known locations in the workspace
@@ -297,16 +297,35 @@ class StateMachine():
             pt = self.kinect.worldCoords
             # 140 mm added in the z to account for vertical approach and
             # negative 90 deg added to get wrist as vertical
-            clickedPos = np.array([pt[1],-pt[0], pt[2]+0.14])
-            pose = [clickedPos[0], clickedPos[1], clickedPos[2], 0, np.pi/2, np.pi]
-            angles = IK_geometric(deepcopy(dh_params), pose)
-            reqAngles = np.array([angles[1][0],angles[1][1],angles[1][2],angles[1][3]-np.pi/2,0,0])
-            print(reqAngles)
-            self.rexarm.set_positions(reqAngles)
+            clickedPos = np.array([pt[1],-pt[0], pt[2]])
+            if self.rexarm.gripper_state:
+                offset_z =  0.038 + 0.015
+            else:
+                offset_z = 0.015
+            pose1 = [clickedPos[0], clickedPos[1], clickedPos[2]+0.1, 0, np.pi - 0.05, np.pi]
+            pose2 = [clickedPos[0], clickedPos[1], clickedPos[2]+offset_z, 0, np.pi - 0.05, np.pi]
+            angles1 = IK_geometric(deepcopy(dh_params), pose1)
+            angles2 = IK_geometric(deepcopy(dh_params), pose2)
+            # print(gripper_angle)
+            reqAngles1 = np.array([angles1[1][0],angles1[1][1],angles1[1][2],angles1[1][3],0,self.set_gripper_angle()])
+            reqAngles2 = np.array([angles2[1][0],angles2[1][1],angles2[1][2],angles2[1][3],0,self.set_gripper_angle()])
+            gripper_prev_state = self.rexarm.gripper_state
+            # print(reqAngles)
+            self.rexarm.set_positions(reqAngles1)
+            time.sleep(1.5)
+            self.rexarm.set_positions(reqAngles2)
+            time.sleep(1.5)
+            if gripper_prev_state:
+                self.rexarm.open_gripper()
+            else:
+                self.rexarm.close_gripper()
+            time.sleep(1.5)
+            reqAngles3 = np.array([angles1[1][0],angles1[1][1],angles1[1][2],angles1[1][3],0,self.set_gripper_angle()])
+            self.rexarm.set_positions(reqAngles3)
             self.kinect.new_click = False
 
     def initialize_rexarm(self):
-        """!
+        """
         @brief      Initializes the rexarm.
         """
         self.current_state = "initialize_rexarm"
@@ -321,3 +340,12 @@ class StateMachine():
         if self.is_logging:
             currRexConfig = self.rexarm.get_positions()
             self.rexarm.csv_writer.writerow(currRexConfig)
+
+    def set_gripper_angle(self):
+        if self.rexarm.gripper_state:
+            gripper_angle = 22
+        elif not self.rexarm.gripper_state:
+            gripper_angle = -49
+        else:
+            gripper_angle = 0
+        return gripper_angle

@@ -320,7 +320,7 @@ class Rexarm():
         self.dxlbus = None
         # Gripper
         self.gripper = None
-        self.gripper_state = True
+        self.gripper_state = False #True means closed
         # State
         self.estop = False
         self.initialized = False
@@ -459,6 +459,7 @@ class Rexarm():
         joint_angles[5] = -49
         self.set_positions(joint_angles)
         # print(f"len(self._joints):{self.num_joints}")
+        self.gripper_state = False
         pass
 
     @_ensure_initialized
@@ -474,7 +475,10 @@ class Rexarm():
 
         @return     True if gripper open, False otherwise.
         """
-        pass
+        if self.gripper_state:
+            return False
+        else:
+            return True
 
     @_ensure_initialized
     def close_gripper(self):
@@ -484,6 +488,7 @@ class Rexarm():
         joint_angles = self.get_positions()
         joint_angles[5] = 22
         self.set_positions(joint_angles)
+        self.gripper_state = True
         pass
 
     @_ensure_initialized
@@ -499,7 +504,7 @@ class Rexarm():
 
         @return     True if gripper close, False otherwise.
         """
-        pass
+        return self.gripper_state
 
     @_ensure_initialized
     def toggle_gripper(self):
