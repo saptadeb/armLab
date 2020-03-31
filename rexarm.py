@@ -19,6 +19,11 @@ The Joint class contains:
 
 You will upgrade some functions and also implement others according to the comments given in the code.
 """
+from PyQt4.QtCore import QThread, QMutex
+from dynamixel_bus import *
+from dynamixel_MX import *
+from dynamixel_AX import *
+from dynamixel_XL import *
 import numpy as np
 from kinematics import *
 import time
@@ -28,12 +33,7 @@ from copy import deepcopy
 import os
 script_path = os.path.dirname(os.path.realpath(__file__))
 os.sys.path.append(os.path.realpath(script_path + '/dynamixel'))
-from dynamixel_XL import *
-from dynamixel_AX import *
-from dynamixel_MX import *
-from dynamixel_bus import *
 
-from PyQt4.QtCore import QThread, QMutex
 
 """
 TODO:
@@ -44,12 +44,13 @@ add anything you see fit
 """
 
 """ Serial Port Parameters"""
-BAUDRATE   = 1000000
+BAUDRATE = 1000000
 DEVICENAME = "/dev/dynamixel".encode('utf-8')
 
 """ Radians to/from  Degrees conversions """
 D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
+
 
 class Joint:
     """!
@@ -110,7 +111,8 @@ class Joint:
         # Collect the rest of the kwargs as readonly properties accesable by joint.name
         for name, value in kwargs.items():
             setattr(self, '_' + name, value)
-            setattr(Joint, name, property(fget=lambda self, name=name: deepcopy(getattr(self, '_' + name))))
+            setattr(Joint, name, property(fget=lambda self,
+                                          name=name: deepcopy(getattr(self, '_' + name))))
 
     def initialize(self):
         """!
@@ -119,9 +121,9 @@ class Joint:
         @return     True if succesful false otherwise
         """
 
-
         # Define serial interface and do initial configuration
-        self._serial_iface = self._safe_serial(Joint.SERVO[self._servo_type], self._port_num, self._servo_id)
+        self._serial_iface = self._safe_serial(
+            Joint.SERVO[self._servo_type], self._port_num, self._servo_id)
         if self._serial_iface is None:
             self._initialized = False
             return self._initialized
@@ -176,7 +178,8 @@ class Joint:
     def torque_limit(self, torque_limit):
         if self._torque_limit != torque_limit:
             self._torque_limit = torque_limit
-            self._safe_serial(self._serial_iface.set_torque_limit, self._torque_limit)
+            self._safe_serial(
+                self._serial_iface.set_torque_limit, self._torque_limit)
 
     @property
     def speed(self):
@@ -290,6 +293,7 @@ class Joint:
         finally:
             self._serial_mutex.unlock()
 
+
 class Rexarm():
     """!
     @brief      This class describes a rexarm.
@@ -320,7 +324,7 @@ class Rexarm():
         self.dxlbus = None
         # Gripper
         self.gripper = None
-        self.gripper_state = False #True means closed
+        self.gripper_state = False  # True means closed
         # State
         self.estop = False
         self.initialized = False
@@ -345,7 +349,7 @@ class Rexarm():
         self.run_thread = RexarmThread(self)
         self.run_thread.start()
 
-    def initialize(self, config_file=script_path+'/config/rexarm_config.csv'):
+    def initialize(self, config_file=script_path + '/config/rexarm_config.csv'):
         """!
         @brief      Initializes the rexarm from given configuration file.
 
@@ -383,7 +387,7 @@ class Rexarm():
         self.speed_fb = [0.0] * self.num_joints        # 0 to 1
         self.load_fb = [0.0] * self.num_joints         # -1 to 1
         self.temp_fb = [0.0] * self.num_joints         # Celsius
-        self.move_fb = [0] *  self.num_joints
+        self.move_fb = [0] * self.num_joints
 
         """ Gripper Vaules """
         self.gripper = None
@@ -428,7 +432,8 @@ class Rexarm():
             type_strs = next(reader)
             types = [Rexarm.STR_TO_TYPE[s] for s in type_strs]
             for row in reader:
-                values = {name: dtype(value) for name, value, dtype in zip(title_row, row, types)}
+                values = {name: dtype(value) for name, value,
+                          dtype in zip(title_row, row, types)}
                 joint = Joint(self._serial_mutex, self.port_num, **values)
                 self._joints.append(joint)
                 if not joint.initialize():
@@ -443,6 +448,7 @@ class Rexarm():
 
         @return     The wraped function
         """
+
         def func_out(self, *args, **kwargs):
             if self.initialized:
                 return func(self, *args, **kwargs)
@@ -511,6 +517,10 @@ class Rexarm():
         """!
         @brief      TODO Toggle the gripper between open and close
         """
+        if self.is_gripper_close():
+            self.open_gripper()
+        elif self.is_gripper_open():
+            self.close_gripper()
         pass
 
     @_ensure_initialized
@@ -702,7 +712,8 @@ class Rexarm():
         """
         dh_params = self.get_dh_parameters()
         joint_angles = self.get_positions()
-        wrist_pose = get_pose_from_T(FK_dh(deepcopy(dh_params), joint_angles, 5))
+        wrist_pose = get_pose_from_T(
+            FK_dh(deepcopy(dh_params), joint_angles, 5))
         # TODO: Check if wrist link is 3
         return wrist_pose
 
