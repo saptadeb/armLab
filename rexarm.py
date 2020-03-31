@@ -1,3 +1,4 @@
+
 """!
 Implements the Rexarm and Joint class.
 
@@ -319,7 +320,7 @@ class Rexarm():
         self.dxlbus = None
         # Gripper
         self.gripper = None
-        self.gripper_state = True
+        self.gripper_state = False #True means closed
         # State
         self.estop = False
         self.initialized = False
@@ -454,6 +455,11 @@ class Rexarm():
         """!
         @brief      TODO: Tell the gripper to open.
         """
+        joint_angles = self.get_positions()
+        joint_angles[5] = -49
+        self.set_positions(joint_angles)
+        # print(f"len(self._joints):{self.num_joints}")
+        self.gripper_state = False
         pass
 
     @_ensure_initialized
@@ -469,13 +475,20 @@ class Rexarm():
 
         @return     True if gripper open, False otherwise.
         """
-        pass
+        if self.gripper_state:
+            return False
+        else:
+            return True
 
     @_ensure_initialized
     def close_gripper(self):
         """!
         @brief      TODO Closes a gripper.
         """
+        joint_angles = self.get_positions()
+        joint_angles[5] = 22
+        self.set_positions(joint_angles)
+        self.gripper_state = True
         pass
 
     @_ensure_initialized
@@ -491,7 +504,7 @@ class Rexarm():
 
         @return     True if gripper close, False otherwise.
         """
-        pass
+        return self.gripper_state
 
     @_ensure_initialized
     def toggle_gripper(self):
@@ -687,7 +700,11 @@ class Rexarm():
 
         @return     The wrist pose as [x, y, z, phi].
         """
-        return [0, 0, 0, 0]
+        dh_params = self.get_dh_parameters()
+        joint_angles = self.get_positions()
+        wrist_pose = get_pose_from_T(FK_dh(deepcopy(dh_params), joint_angles, 5))
+        # TODO: Check if wrist link is 3
+        return wrist_pose
 
     def get_dh_parameters(self):
         """!

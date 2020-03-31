@@ -23,7 +23,10 @@ class TrajectoryPlanner():
         self.initial_wp = None
         self.final_wp = None
         self.dt = 0.05 # command rate
-        self.desired_speed = None
+        self.desired_speed = 0.75
+        self.speed_multiplier = 1.0
+        self.is_init = True
+        self.is_final = False
 
     def set_initial_wp(self):
         """!
@@ -41,15 +44,18 @@ class TrajectoryPlanner():
         self.final_wp = waypoint
         pass
 
-    def go(self, max_speed=2.5):
+    def go(self, max_speed=2.5, is_init=True, is_final=True):
         """!
         @brief      TODO Plan and execute the trajectory.
 
         @param      max_speed  The maximum speed
         """
+        self.is_init = is_init
+        self.is_final = is_final
         self.set_initial_wp()
-        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, 1.5)
+        T = self.calc_time_from_waypoints(self.initial_wp, self.final_wp, self.desired_speed)
         (pose_plan, velocity_plan) = self.generate_cubic_spline(self.initial_wp, self.final_wp, T)
+        #(pose_plan, velocity_plan) = self.generate_quintic_spline(self.initial_wp, self.final_wp, T)
         self.execute_plan(pose_plan, velocity_plan)
         pass
 
@@ -87,13 +93,19 @@ class TrajectoryPlanner():
         @return     The plan as num_steps x num_joints np.array
         """
         T0 = 0
-        V0 = 0
-        Vf = 0
+        if self.is_init:
+            V0 = 0
+        else:
+            V0 = self.desired_speed * self.speed_multiplier
+        if self.is_final:
+            Vf = 0
+        else:
+            Vf = self.desired_speed * self.speed_multiplier
         numSteps = int(T / self.dt)
         numJoints = len(initial_wp)
         pose_plan = np.zeros([numSteps, numJoints])
         velocity_plan = np.zeros([numSteps, numJoints])
-        M = self.getCubicCoeffs(T0, T)(T0, T)
+        M = self.getCubicCoeffs(T0, T)
         M_inv = np.linalg.inv(M)
         parameters = []
         for i in range(numJoints):
@@ -126,8 +138,14 @@ class TrajectoryPlanner():
         @return     The plan as num_steps x num_joints np.array
         """
         T0 = 0
-        V0 = 0
-        Vf = 0
+        if self.is_init:
+            V0 = 0
+        else:
+            V0 = 0.75
+        if self.is_final:
+            Vf = 0
+        else:
+            Vf = 0.75
         a0 = 0
         af = 0
         numSteps = int(T / self.dt)

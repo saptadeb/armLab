@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import time
 from functools import partial
+import csv
 
 from PyQt4.QtCore import (QThread, Qt, pyqtSignal, pyqtSlot, QTimer)
 from PyQt4.QtGui import (QPixmap, QImage, QApplication, QWidget, QLabel, QMainWindow, QCursor)
@@ -169,7 +170,7 @@ class Gui(QMainWindow):
         self.rexarm = Rexarm()
         self.tp = TrajectoryPlanner(self.rexarm)
         self.sm = StateMachine(self.rexarm, self.tp, self.kinect)
-
+        self.sm.is_logging = False
         """
         Attach Functions to Buttons & Sliders
         TODO: NAME AND CONNECT BUTTONS AS NEEDED
@@ -190,6 +191,12 @@ class Gui(QMainWindow):
         self.ui.btnUser2.clicked.connect(self.record)
         self.ui.btnUser3.clicked.connect(self.playback)
         self.ui.btnUser4.clicked.connect(self.execute_tp)
+        self.ui.btnUser5.clicked.connect(self.toggle_logging)
+        self.ui.btnUser1.clicked.connect(self.calibrate)
+        self.ui.btnUser6.clicked.connect(self.blockDetect)
+        self.ui.btnUser7.clicked.connect(self.openGripper)
+        self.ui.btnUser8.clicked.connect(self.closeGripper)
+        self.ui.btnUser9.clicked.connect(self.clickGrab)
         # Sliders
         for sldr in self.joint_sliders:
             sldr.valueChanged.connect(self.sliderChange)
@@ -251,8 +258,8 @@ class Gui(QMainWindow):
         self.ui.rdoutY.setText(str("%+.2f" % (pos[1])))
         self.ui.rdoutZ.setText(str("%+.2f" % (pos[2])))
         self.ui.rdoutT.setText(str("%+.2f" % (pos[3])))
-        # self.ui.rdoutG.setText(str("%+.2f" % (pos[4])))
-        # self.ui.rdoutP.setText(str("%+.2f" % (pos[5])))
+        self.ui.rdoutG.setText(str("%+.2f" % (pos[4])))
+        self.ui.rdoutP.setText(str("%+.2f" % (pos[5])))
 
     @pyqtSlot(list)
     def updateJointErrors(self, errors):
@@ -280,6 +287,31 @@ class Gui(QMainWindow):
 
     def execute_tp(self):
         self.sm.set_next_state("execute_tp")
+
+    def calibrate(self):
+        self.sm.set_next_state("calibrate")
+
+    def blockDetect(self):
+        self.kinect.blockDetector()
+
+    def openGripper(self):
+        self.rexarm.open_gripper()
+
+    def closeGripper(self):
+        self.rexarm.close_gripper()
+
+    def clickGrab(self):
+        self.sm.set_next_state("clickGrab")
+
+    def toggle_logging(self):
+        if not self.sm.is_logging:
+            # with open('log_data.csv', 'a') as log_file:
+            self.rexarm.log_file = open('log_data.csv','a')
+            self.rexarm.csv_writer = csv.writer(self.rexarm.log_file, delimiter=',')
+            self.sm.is_logging = True
+        else:
+            self.rexarm.log_file.close()
+            self.sm.is_logging = False
 
 
     def sliderChange(self):
@@ -340,9 +372,18 @@ class Gui(QMainWindow):
 
         @param      mouse_event  QtMouseEvent containing the pose of the mouse at the time of the event not current time
         """
-        if self.kinect.DepthFrameRaw.any() != 0:
-            self.ui.rdoutMousePixels.setText("(-,-,-)")
-            self.ui.rdoutMouseWorld.setText("(-,-,-)")
+        # if self.kinect.DepthFrameRaw.any() != 0:
+        #     self.ui.rdoutMousePixels.setText("(-,-,-)")
+        #     self.ui.rdoutMouseWorld.setText("(-,-,-)")
+        if self.kinect.cameraCalibrated:
+            pixel = np.array([mouse_event.y(), mouse_event.x()])
+            # cameraCoord = self.kinect.pixel2Camera(pixel)
+            worldCoord = self.kinect.getWorldCoord(pixel)
+            self.kinect.worldCoords = worldCoord
+            # print(worldCoord)
+            self.ui.rdoutMousePixels.setText(np.array2string(pixel))
+            # self.ui.rdoutMouseWorld.setText(np.array2string((worldCoord * 100).astype(int)))
+            self.ui.rdoutMouseWorld.setText(np.array2string((worldCoord)))
 
     def calibrateMousePress(self, mouse_event):
         """!
