@@ -17,7 +17,7 @@ A project for ROB 550: Robotics Systems Lab course taught in University of Michi
 - State machines
 
 The whole pipeline can be explained by the following figure: 
-<div style="text-align:center"><img src="pipeline.png" width="500"></div>
+<div style="text-align:center"><img src="pipeline.PNG" width="500"></div>
 
 ### Running the code
 
