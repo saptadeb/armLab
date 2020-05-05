@@ -17,7 +17,7 @@ A project for ROB 550: Robotics Systems Lab course taught in University of Michi
 - State machines
 
 The whole pipeline can be explained by the following figure: 
-<div style="text-align:center"><img src="pipeline.PNG" width="500"></div>
+<img src="pipeline.PNG" width="500">
 
 ### Running the code
 
@@ -44,11 +44,11 @@ The whole pipeline can be explained by the following figure:
 
 ### Lab setup
 
-<div style="text-align:center"><img src="lab_setup.jpg" width="500"></div>
+<img src="lab_setup.jpg" width="500">
 
 ### Teach 'n Play (on an Operations board)
 
-<div style="text-align:center"><img src="teachnplay.gif" width="500"></div>
+<img src="teachnplay.gif" width="500">
 
 ### Collaborators
 [Saptadeep Debnath](https://www.linkedin.com/in/saptadeep-deb/), [Pradeep Suresh](https://www.linkedin.com/in/prad33p/) and [Yuping Wang](ypw@umich.edu).
