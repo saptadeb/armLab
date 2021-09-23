@@ -1,5 +1,7 @@
 # 6-DOF Serial Link Robotic Manipulator
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7b971d99221c4196a226114ac9bad78f)](https://www.codacy.com/gh/saptadeb/armLab/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=saptadeb/armLab&amp;utm_campaign=Badge_Grade)
+
 A project for ROB 550: Robotics Systems Lab course taught in University of Michigan, Ann Arbor. An overview of this project:
 ##### Acting
 - 6-DOF rigid-body coordinate transforms using homogeneous coordinate transforms
