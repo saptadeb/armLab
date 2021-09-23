@@ -1,4 +1,3 @@
-
 """!
 Implements the Rexarm and Joint class.
 
@@ -287,7 +286,7 @@ class Joint:
             out = func(*args, **kwargs)
             self._is_serial_ok = True
             return out
-        except Exception as e:
+        except Exception as _:
             self._serial_errors += 1
             self._is_serial_ok = False
         finally:
