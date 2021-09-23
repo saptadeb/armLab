@@ -106,7 +106,7 @@ class StateMachine():
         self.current_state = "record"
 
         # Disable torque to enable manual guiding
-        torque_limit_cmds = [0] * len(self.rexarm._joints)
+        # torque_limit_cmds = [0] * len(self.rexarm._joints)
         for joint in self.rexarm._joints:
             joint.torque_limit = 0
 
@@ -131,7 +131,8 @@ class StateMachine():
         self.current_state = "playback"
 
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
-        (num_wp, num_joints) = waypoints.shape
+        # (num_wp, num_joints) = waypoints.shape
+        (num_wp, _) = waypoints.shape
         for wp in range(num_wp):
             wp_list = waypoints[wp,:].tolist()
             self.rexarm.set_positions(wp_list)
@@ -196,8 +197,9 @@ class StateMachine():
         self.current_state = "execute"
         self.next_state = "idle"
         waypoints = genfromtxt("waypoints.csv", delimiter=',')
-        (num_wp, num_joints) = waypoints.shape
-        actual_joint_positions = []
+        # (num_wp, num_joints) = waypoints.shape
+        (num_wp, _) = waypoints.shape
+        # actual_joint_positions = []
         for wp in range(1,num_wp):
             print(f"waypoint:{wp}")
             wp_list = waypoints[wp,:].tolist()
@@ -228,11 +230,11 @@ class StateMachine():
         self.current_state = "calibrate"
         self.next_state = "idle"
 
-        location_strings = ["lower left corner of board",
-                            "upper left corner of board",
-                            "upper right corner of board",
-                            "lower right corner of board",
-                            "center of shoulder motor"]
+        # location_strings = ["lower left corner of board",
+        #                     "upper left corner of board",
+        #                     "upper right corner of board",
+        #                     "lower right corner of board",
+        #                     "center of shoulder motor"]
         # i = 0
         # for j in range(5):
         #     self.status_message = "Calibration - Click %s in RGB image" % location_strings[j]
@@ -256,23 +258,23 @@ class StateMachine():
 
         self.kinect.rgb_click_points = np.array([[138, 405], [138,  92], [472,  90], [475, 404], [304, 243]])
         self.kinect.depth_click_points = np.array([[158, 412], [156,  49], [519,  48], [528, 410], [340, 221]])
-        """
-        [[138 404]
- [138  94]
- [470  89]
- [473 401]
- [304 253]]
-[[158 411]
- [155  49]
- [518  48]
- [523 410]
- [338 237]]
-[[ 0.18348274 -0.24802349  0.92911304]
- [-0.37096088 -0.25140579  0.94178337]
- [-0.38413287  0.35003765  0.95216683]
- [ 0.17864623  0.34782623  0.93162023]
- [-0.07310551  0.04062922  0.80713093]]
-"""
+        
+        # [[138 404]
+        # [138  94]
+        # [470  89]
+        # [473 401]
+        # [304 253]]
+        # [[158 411]
+        # [155  49]
+        # [518  48]
+        # [523 410]
+        # [338 237]]
+        # [[ 0.18348274 -0.24802349  0.92911304]
+        # [-0.37096088 -0.25140579  0.94178337]
+        # [-0.38413287  0.35003765  0.95216683]
+        # [ 0.17864623  0.34782623  0.93162023]
+        # [-0.07310551  0.04062922  0.80713093]]
+ 
         """TODO Perform camera calibration here"""
         # print(self.kinect.rgb_click_points)
         # Use mouse clicks to get pixel locations of known locations in the workspace

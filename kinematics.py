@@ -7,7 +7,7 @@ There are some functions to start with, you may need to implement a few more
 
 import numpy as np
 # expm is a matrix exponential function
-from scipy.linalg import expm
+# from scipy.linalg import expm
 
 def clamp(angle):
     """!
@@ -163,7 +163,7 @@ def IK_geometric(dh_params, pose):
     x = pose[0]
     y = pose[1]
     z = pose[2]
-    phi = pose[3]
+    # phi = pose[3]
     theta = pose[4]
     psi = pose[5]
     theta5 = clamp(psi + np.pi)

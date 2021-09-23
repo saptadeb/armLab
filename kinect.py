@@ -144,7 +144,7 @@ class Kinect():
                              QImage.Format_RGB888
                              )
             return img
-        except:
+        except Exception as _:
             return None
 
     def convertQtDepthFrame(self):
@@ -288,7 +288,7 @@ class Kinect():
         ctp2 = borderPoints[0, 1]
         ctp3 = borderPoints[1, 0]
         ctp4 = borderPoints[1, 1]
-        ctp5 = borderPoints[2, 0]
+        # ctp5 = borderPoints[2, 0]
         ctp6 = borderPoints[2, 1]
         hsvImg[:, 0: ctp2] = np.array([0, 0, 100])
         hsvImg[:, ctp6: n] = np.array([0, 0, 100])
@@ -350,7 +350,8 @@ class Kinect():
                 hsvImg_singleColor = cv2.bitwise_or(hsvImg_singleColor, hsvImg_singleColor2)
                 inRangeMask = cv2.bitwise_or(inRangeMask, inRangeMask2)
 
-            contours, hierarchy = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # contours, hierarchy = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(inRangeMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             for i in range(len(contours)):
                 contour = contours[i]

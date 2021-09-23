@@ -4,17 +4,20 @@ Main GUI for Arm lab
 """
 
 import sys
-import cv2
+# import cv2
 import numpy as np
 import time
 from functools import partial
 import csv
 
-from PyQt4.QtCore import (QThread, Qt, pyqtSignal, pyqtSlot, QTimer)
-from PyQt4.QtGui import (QPixmap, QImage, QApplication, QWidget, QLabel, QMainWindow, QCursor)
+# from PyQt4.QtCore import (QThread, Qt, pyqtSignal, pyqtSlot, QTimer)
+# from PyQt4.QtGui import (QPixmap, QImage, QApplication, QWidget, QLabel, QMainWindow, QCursor)
+from PyQt4.QtCore import (QThread, Qt, pyqtSignal, pyqtSlot)
+from PyQt4.QtGui import (QPixmap, QImage, QApplication, QWidget, QMainWindow)
 
 from ui import Ui_MainWindow
-from rexarm import Rexarm, RexarmThread
+# from rexarm import Rexarm, RexarmThread
+from rexarm import Rexarm
 from kinect import Kinect
 from trajectory_planner import TrajectoryPlanner
 from state_machine import StateMachine

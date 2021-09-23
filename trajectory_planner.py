@@ -34,7 +34,7 @@ class TrajectoryPlanner():
         @brief      TODO: Sets the initial wp to the current position.
         """
         self.initial_wp = self.rexarm.get_positions()
-        pass
+        # pass
 
     def set_final_wp(self, waypoint):
         """!
@@ -43,7 +43,7 @@ class TrajectoryPlanner():
         @param      waypoint  The waypoint
         """
         self.final_wp = waypoint
-        pass
+        # pass
 
     def go(self, max_speed=2.5, is_init=True, is_final=True):
         """
@@ -60,14 +60,14 @@ class TrajectoryPlanner():
             self.initial_wp, self.final_wp, T)
         #(pose_plan, velocity_plan) = self.generate_quintic_spline(self.initial_wp, self.final_wp, T)
         self.execute_plan(pose_plan, velocity_plan)
-        pass
+        # pass
 
     def stop(self):
         """!
         @brief      TODO Stop the trajectory planner
         """
         self.idle = True
-        pass
+        # pass
 
     def calc_time_from_waypoints(self, initial_wp, final_wp, max_speed):
         """!
@@ -84,7 +84,7 @@ class TrajectoryPlanner():
         max_joint_dist_to_cover = np.max(joint_dist_to_cover)
         T = max_joint_dist_to_cover / max_speed
         return T
-        pass
+        # pass
 
     def generate_cubic_spline(self, initial_wp, final_wp, T):
         """!
